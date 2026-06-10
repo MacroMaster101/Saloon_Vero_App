@@ -4,15 +4,27 @@ import { useTheme } from '@/hooks/use-theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Image, Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
+import { Card } from '@/components/ui/card';
+import { ScreenContainer } from '@/components/ui/screen';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SPLASH_DELAY_MS = process.env.NODE_ENV === 'test' ? 0 : 3000;
 
 export default function EntryScreen() {
-  const { loading: sessionLoading } = useSession();
-  const { c, scheme, Spacing, Type } = useTheme();
+  const { user, loading: sessionLoading, isGuest } = useSession();
+  const { c, scheme, Spacing, Type, Radius } = useTheme();
+  
+  const featureItemStyle = {
+    backgroundColor: Platform.OS === 'ios'
+      ? (scheme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.5)')
+      : (scheme === 'dark' ? '#120E0A' : '#FAF6EE'),
+    borderColor: Platform.OS === 'ios'
+      ? (scheme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)')
+      : (scheme === 'dark' ? '#2E251E' : '#EBE2CF'),
+  };
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
   const [delayFinished, setDelayFinished] = useState(process.env.NODE_ENV === 'test');
   const [progress, setProgress] = useState(0);
@@ -76,15 +88,20 @@ export default function EntryScreen() {
     if (isFirstTime === null || sessionLoading || !delayFinished) return;
 
     if (!isFirstTime) {
-      // Returning user: redirect straight to main tabs
-      router.replace('/(tabs)');
+      if (user) {
+        router.replace('/(tabs)');
+      } else if (isGuest) {
+        router.replace('/(tabs)/book');
+      } else {
+        router.replace('/access' as never);
+      }
     }
-  }, [isFirstTime, sessionLoading, delayFinished]);
+  }, [isFirstTime, sessionLoading, delayFinished, user, isGuest]);
 
   // Actions
   const handleGetStarted = async () => {
     await AsyncStorage.setItem('has_seen_welcome', 'true');
-    router.replace('/(tabs)');
+    router.replace('/access' as never);
   };
 
   const animatedLogoStyle = useAnimatedStyle(() => ({
@@ -96,8 +113,8 @@ export default function EntryScreen() {
   }));
 
   // Render Splash Loader
-  if (isFirstTime === null || sessionLoading || !isFirstTime || !delayFinished) {
-    const overlayColor = scheme === 'dark' ? 'rgba(28, 22, 17, 0.88)' : 'rgba(247, 241, 228, 0.9)';
+  if (isFirstTime === null || sessionLoading || !delayFinished || !isFirstTime) {
+    const overlayColor = scheme === 'dark' ? 'rgba(18, 14, 10, 0.75)' : 'rgba(250, 246, 238, 0.75)';
     
     return (
       <View style={styles.container}>
@@ -107,7 +124,12 @@ export default function EntryScreen() {
           style={StyleSheet.absoluteFillObject}
           resizeMode="cover"
         />
-        {/* Warm theme overlay */}
+        {/* Glassy backdrop blur overlay */}
+        <BlurView
+          intensity={55}
+          tint={scheme === 'dark' ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFillObject}
+        />
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: overlayColor }]} />
         
         <View style={[styles.splashContent, { flex: 1, justifyContent: 'center' }]}>
@@ -117,7 +139,7 @@ export default function EntryScreen() {
             <Animated.View style={[styles.outerRing, { borderColor: c.accent, borderStyle: 'dashed' }, animatedOuterRingStyle]} />
             
             {/* Pulsing inner circle containing the official logo */}
-            <Animated.View style={[styles.logoCircle, { backgroundColor: '#FFFFFF', borderColor: c.line }, animatedLogoStyle]}>
+            <Animated.View style={[styles.logoCircle, { backgroundColor: 'rgba(255, 255, 255, 0.85)', borderColor: 'rgba(255,255,255,0.4)' }, animatedLogoStyle]}>
               <Image
                 source={require('@/assets/images/logo.jpg')}
                 style={styles.logoImage}
@@ -126,16 +148,16 @@ export default function EntryScreen() {
             </Animated.View>
           </View>
           
-          <Animated.Text entering={FadeIn.delay(300)} style={[Type.h1, { color: c.fg, marginTop: Spacing.xl, textAlign: 'center' }]}>
+          <Animated.Text entering={FadeIn.delay(300)} style={[Type.h1, { color: c.fg, marginTop: Spacing.xl, textAlign: 'center', letterSpacing: 0.5 }]}>
             Saloon Vero
           </Animated.Text>
-          <Animated.Text entering={FadeIn.delay(500)} style={[Type.caption, { color: c.accentText, letterSpacing: 2, textTransform: 'uppercase', textAlign: 'center', marginTop: 6, marginBottom: Spacing.xl * 1.5 }]}>
+          <Animated.Text entering={FadeIn.delay(500)} style={[Type.caption, { color: c.accentText, letterSpacing: 3, textTransform: 'uppercase', textAlign: 'center', marginTop: 8, marginBottom: Spacing.xl * 1.5, fontFamily: 'Poppins_600SemiBold' }]}>
             Redefine Your Look
           </Animated.Text>
 
           {/* Progress bar and counter */}
           <View style={styles.progressContainer}>
-            <View style={[styles.progressBarBg, { backgroundColor: c.line }]}>
+            <View style={[styles.progressBarBg, { backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
               <View style={[styles.progressBarFill, { backgroundColor: c.accent, width: `${progress}%` }]} />
             </View>
             <Text style={[Type.caption, { color: c.fg2, fontFamily: 'Poppins_600SemiBold', textAlign: 'center', marginTop: 8 }]}>
@@ -149,67 +171,72 @@ export default function EntryScreen() {
 
   // Render Onboarding Welcome Screen
   return (
-    <View style={[styles.container, { backgroundColor: c.bg }]}>
+    <ScreenContainer scroll={false} style={{ padding: 0 }}>
       {/* Top Graphic */}
-      <View style={[styles.heroContainer, { height: SCREEN_HEIGHT * 0.45 }]}>
+      <View style={[styles.heroContainer, { height: SCREEN_HEIGHT * 0.4 }]}>
         <Image
           source={require('@/assets/images/onboarding_hero.png')}
           style={styles.heroImage}
           resizeMode="cover"
         />
         {/* Subtle overlay gradient */}
+        <BlurView
+          intensity={15}
+          tint="dark"
+          style={StyleSheet.absoluteFillObject}
+        />
         <View style={styles.overlay} />
       </View>
 
-      {/* Bottom Content */}
-      <View style={[styles.contentContainer, { padding: Spacing.lg }]}>
-        <Animated.View entering={FadeInDown.delay(100).duration(500)}>
-          <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 1.5, textTransform: 'uppercase' }]}>
-            Welcome to Saloon Vero
-          </Text>
-          <Text style={[Type.h1, { color: c.fg, marginTop: Spacing.xs, lineHeight: 36 }]}>
-            Redefine Your Style, Effortlessly
-          </Text>
-          <Text style={[Type.body, { color: c.fg2, marginTop: Spacing.sm, marginBottom: Spacing.md }]}>
-            Step into premium care. Schedule expert haircuts, professional styling, and treatments in seconds.
-          </Text>
-        </Animated.View>
+      {/* Bottom Content wrapped in premium glassy layout */}
+      <View style={[styles.contentContainer, { padding: Spacing.md, marginTop: -20 }]}>
+        <Card style={{ flex: 1, justifyContent: 'space-between', gap: Spacing.sm }}>
+          <View>
+            <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 1.5, textTransform: 'uppercase' }]}>
+              Welcome to Saloon Vero
+            </Text>
+            <Text style={[Type.h1, { color: c.fg, marginTop: Spacing.xs, lineHeight: 32, fontSize: 24 }]}>
+              Redefine Your Style, Effortlessly
+            </Text>
+            <Text style={[Type.body, { color: c.fg2, marginTop: Spacing.xs, marginBottom: Spacing.md, fontSize: 14 }]}>
+              Step into premium care. Schedule expert haircuts, professional styling, and treatments in seconds.
+            </Text>
 
-        {/* Feature Highlights */}
-        <View style={styles.featuresList}>
-          <Animated.View entering={FadeInDown.delay(300).duration(500)} style={styles.featureItem}>
-            <Text style={styles.featureIcon}>✂️</Text>
-            <View style={styles.featureTextContainer}>
-              <Text style={[Type.label, { color: c.fg }]}>Expert Stylists</Text>
-              <Text style={[Type.caption, { color: c.fgMuted }]}>Custom trims and style consultations</Text>
+            {/* Feature Highlights */}
+            <View style={styles.featuresList}>
+              <Animated.View entering={FadeInDown.delay(200).duration(500)} style={[styles.featureItem, featureItemStyle, { padding: Spacing.sm, borderRadius: Radius.md, borderWidth: 1 }]}>
+                <Text style={styles.featureIcon}>✂️</Text>
+                <View style={styles.featureTextContainer}>
+                  <Text style={[Type.label, { color: c.fg }]}>Expert Stylists</Text>
+                  <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>Custom trims and style consultations</Text>
+                </View>
+              </Animated.View>
+
+              <Animated.View entering={FadeInDown.delay(350).duration(500)} style={[styles.featureItem, featureItemStyle, { padding: Spacing.sm, borderRadius: Radius.md, borderWidth: 1 }]}>
+                <Text style={styles.featureIcon}>📅</Text>
+                <View style={styles.featureTextContainer}>
+                  <Text style={[Type.label, { color: c.fg }]}>Real-time Booking</Text>
+                  <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>Instant slot confirmations, zero phone tag</Text>
+                </View>
+              </Animated.View>
+
+              <Animated.View entering={FadeInDown.delay(500).duration(500)} style={[styles.featureItem, featureItemStyle, { padding: Spacing.sm, borderRadius: Radius.md, borderWidth: 1 }]}>
+                <Text style={styles.featureIcon}>✨</Text>
+                <View style={styles.featureTextContainer}>
+                  <Text style={[Type.label, { color: c.fg }]}>Luxe Experience</Text>
+                  <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>Relaxing atmosphere and premium care products</Text>
+                </View>
+              </Animated.View>
             </View>
+          </View>
+
+          {/* Action Button */}
+          <Animated.View entering={FadeInDown.delay(650).duration(500)} style={{ marginTop: Spacing.md }}>
+            <ThemedButton label="Get Started" onPress={handleGetStarted} />
           </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(450).duration(500)} style={styles.featureItem}>
-            <Text style={styles.featureIcon}>📅</Text>
-            <View style={styles.featureTextContainer}>
-              <Text style={[Type.label, { color: c.fg }]}>Real-time Booking</Text>
-              <Text style={[Type.caption, { color: c.fgMuted }]}>Instant slot confirmations, zero phone tag</Text>
-            </View>
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(600).duration(500)} style={styles.featureItem}>
-            <Text style={styles.featureIcon}>✨</Text>
-            <View style={styles.featureTextContainer}>
-              <Text style={[Type.label, { color: c.fg }]}>Luxe Experience</Text>
-              <Text style={[Type.caption, { color: c.fgMuted }]}>Relaxing atmosphere and premium care products</Text>
-            </View>
-          </Animated.View>
-        </View>
-
-        <View style={{ flex: 1 }} />
-
-        {/* Action Button */}
-        <Animated.View entering={FadeInDown.delay(750).duration(500)} style={{ marginBottom: Spacing.md }}>
-          <ThemedButton label="Get Started" onPress={handleGetStarted} />
-        </Animated.View>
+        </Card>
       </View>
-    </View>
+    </ScreenContainer>
   );
 }
 

@@ -30,6 +30,7 @@ describe('EntryScreen / Splash & Onboarding Flow', () => {
     (useSession as jest.Mock).mockReturnValue({
       user: null,
       loading: true,
+      isGuest: false,
     });
     (AsyncStorage.getItem as jest.Mock).mockReturnValue(Promise.resolve(null));
 
@@ -48,11 +49,12 @@ describe('EntryScreen / Splash & Onboarding Flow', () => {
     (useSession as jest.Mock).mockReturnValue({
       user: null,
       loading: false,
+      isGuest: false,
     });
     // Simulating no 'has_seen_welcome' key (first-time user)
     (AsyncStorage.getItem as jest.Mock).mockReturnValue(Promise.resolve(null));
 
-    const { getByText, queryByText } = render(<EntryScreen />);
+    const { getByText } = render(<EntryScreen />);
 
     // Wait for the async storage check to resolve and screen state to update
     await waitFor(() => {
@@ -66,6 +68,7 @@ describe('EntryScreen / Splash & Onboarding Flow', () => {
     (useSession as jest.Mock).mockReturnValue({
       user: { id: 'user-1' },
       loading: false,
+      isGuest: false,
     });
     // Simulating user has already seen welcome screen
     (AsyncStorage.getItem as jest.Mock).mockReturnValue(Promise.resolve('true'));
@@ -77,10 +80,26 @@ describe('EntryScreen / Splash & Onboarding Flow', () => {
     });
   });
 
-  test('clicking Get Started saves state and redirects to tabs', async () => {
+  test('redirects returning guest users to guest book tab', async () => {
     (useSession as jest.Mock).mockReturnValue({
       user: null,
       loading: false,
+      isGuest: true,
+    });
+    (AsyncStorage.getItem as jest.Mock).mockReturnValue(Promise.resolve('true'));
+
+    render(<EntryScreen />);
+
+    await waitFor(() => {
+      expect(router.replace).toHaveBeenCalledWith('/(tabs)/book');
+    });
+  });
+
+  test('clicking Get Started saves state and redirects to access choices', async () => {
+    (useSession as jest.Mock).mockReturnValue({
+      user: null,
+      loading: false,
+      isGuest: false,
     });
     (AsyncStorage.getItem as jest.Mock).mockReturnValue(Promise.resolve(null));
 
@@ -97,7 +116,7 @@ describe('EntryScreen / Splash & Onboarding Flow', () => {
     // Verify state was saved and we redirected
     expect(AsyncStorage.setItem).toHaveBeenCalledWith('has_seen_welcome', 'true');
     await waitFor(() => {
-      expect(router.replace).toHaveBeenCalledWith('/(tabs)');
+      expect(router.replace).toHaveBeenCalledWith('/access');
     });
   });
 });

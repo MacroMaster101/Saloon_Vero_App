@@ -21,7 +21,7 @@ type Booking = { reference: string; starts_at: string; status: string };
 const whenFmt = new Intl.DateTimeFormat('en-LK', { timeZone: 'Asia/Colombo', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true });
 
 export default function Account() {
-  const { c, Type, Spacing } = useTheme();
+  const { c, Type, Spacing, scheme } = useTheme();
   const { user, loading, signOut } = useSession();
   const [name, setName] = useState(''); const [phone, setPhone] = useState('');
   const [bookings, setBookings] = useState<Booking[]>([]); const [msg, setMsg] = useState<string | null>(null);
@@ -50,6 +50,10 @@ export default function Account() {
     await supabase.auth.updateUser({ data: { avatar_url: data.publicUrl, custom_avatar_url: data.publicUrl, avatar_choice: 'custom' } });
     setMsg('Photo updated');
   }
+  async function logout() {
+    await signOut();
+    router.replace('/access' as never);
+  }
 
   if (loading) {
     return <LoadingScreen message="Loading account..." />;
@@ -58,27 +62,40 @@ export default function Account() {
   const src = avatarSrc(user.user_metadata as any, user.email ?? name);
   return (
     <ScreenContainer>
-      <View style={{ alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.md }}>
-        <View style={{ padding: 3, borderRadius: 50, borderWidth: 2, borderColor: c.accent }}>
-          <Image source={{ uri: src }} style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: c.bg2 }} contentFit="cover" />
+      <View style={{ alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.lg, marginTop: Spacing.md }}>
+        <View style={{ 
+          padding: 4, 
+          borderRadius: 50, 
+          borderWidth: 2, 
+          borderColor: scheme === 'dark' ? 'rgba(232, 176, 90, 0.4)' : 'rgba(217, 154, 61, 0.4)',
+          backgroundColor: 'rgba(255,255,255,0.1)'
+        }}>
+          <Image source={{ uri: src }} style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: c.bg2 }} contentFit="cover" />
         </View>
-        <Text onPress={pickAvatar} style={[Type.label, { color: c.accentText }]}>Change photo</Text>
+        <Text onPress={pickAvatar} style={[Type.label, { color: c.accentText, fontFamily: 'Poppins_600SemiBold', marginTop: 4 }]}>Change photo</Text>
       </View>
-      <Card>
+      
+      <Card style={{ padding: Spacing.lg, gap: Spacing.xs }}>
         <ThemedTextInput label="Name" value={name} onChangeText={setName} />
         <ThemedTextInput label="Mobile" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-        <ThemedButton label="Save" onPress={saveProfile} />
-        {msg && <Text style={[Type.caption, { color: c.accentText, marginTop: Spacing.sm }]}>{msg}</Text>}
+        <ThemedButton label="Save Details" onPress={saveProfile} style={{ marginTop: Spacing.xs }} />
+        {msg && <Text style={[Type.caption, { color: c.accentText, marginTop: Spacing.sm, textAlign: 'center', fontFamily: 'Poppins_600SemiBold' }]}>{msg}</Text>}
       </Card>
-
+ 
       <SectionHeader eyebrow="History" title="My bookings" />
-      {bookings.length === 0 ? <Text style={[Type.body, { color: c.fgMuted }]}>No bookings yet.</Text> : bookings.map((b) => (
+      {bookings.length === 0 ? (
+        <Text style={[Type.body, { color: c.fgMuted, paddingHorizontal: Spacing.sm }]}>No bookings yet.</Text>
+      ) : bookings.map((b) => (
         <Card key={b.reference} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm }}>
-          <View><Text style={[Type.label, { color: c.fg }]}>{b.reference}</Text><Text style={[Type.caption, { color: c.fgMuted }]}>{whenFmt.format(new Date(b.starts_at))}</Text></View>
+          <View>
+            <Text style={[Type.label, { color: c.fg, fontSize: 15, fontFamily: 'Poppins_600SemiBold' }]}>{b.reference}</Text>
+            <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>{whenFmt.format(new Date(b.starts_at))}</Text>
+          </View>
           <StatusTag status={b.status} />
         </Card>
       ))}
-      <ThemedButton variant="secondary" label="Sign out" onPress={signOut} style={{ marginTop: Spacing.lg }} />
+      
+      <ThemedButton variant="secondary" label="Sign out" onPress={logout} style={{ marginTop: Spacing.xl, marginBottom: Spacing.md }} />
     </ScreenContainer>
   );
 }

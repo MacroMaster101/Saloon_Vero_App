@@ -39,7 +39,8 @@ A premium **React Native + Expo SDK 54 + TypeScript** customer-facing mobile app
 
 *   **🔐 Secure Authentication:**
     *   📧 Email and Password signup/login (Supabase Auth).
-    *   🌐 **"Continue with Google"** OAuth integration via `expo-auth-session` and `expo-web-browser`.
+    *   🌐 **"Continue with Google"** OAuth integration via `expo-auth-session` and `expo-web-browser`, returning to the app through the `saloonveroapp://auth/callback` deep link.
+    *   🕶️ **Guest mode:** browse services and book without an account — guest bookings are kept locally in AsyncStorage and surfaced in the Schedules tab.
 *   **🎨 Aesthetics & Theming ("Warm Luxe"):**
     *   🌗 Curated light and dark brand modes driven automatically by the device's system settings.
     *   ✍️ Refined **Poppins** typography (weights from `400Regular` to `800ExtraBold`).
@@ -48,7 +49,8 @@ A premium **React Native + Expo SDK 54 + TypeScript** customer-facing mobile app
     *   🚶‍♂️ Stepped flow: Service Selection $\rightarrow$ Stylist Choice (or *"Any Stylist"*) $\rightarrow$ Date $\rightarrow$ Real-Time Available Time Slots $\rightarrow$ Contact Details $\rightarrow$ Success (generates a unique `VS-XXXXX` reference code).
 *   **👤 User Dashboard:**
     *   🖼️ Profile manager: edit name, phone number, and upload custom avatars directly to Supabase Storage (falls back to email-derived DiceBear avatars if un-configured).
-    *   📋 Appointment list displaying upcoming and past bookings with clear status pills (e.g., *Confirmed*, *Completed*, *Cancelled*).
+    *   📋 **Schedules tab** displaying upcoming and past bookings with clear status pills (e.g., *Confirmed*, *Completed*, *Cancelled*).
+    *   ✨ **New Things tab** highlighting fresh services and salon updates.
 
 ---
 
@@ -70,8 +72,10 @@ Saloon_Vero_App/
   app/                         # 📂 Expo Router file-based screens and layouts
     _layout.tsx                # ⚙️ Global providers, fonts, splash handling, route setup
     index.tsx                  # ✨ Branded splash/onboarding entry screen
+    access.tsx                 # 🚪 Sign-in / guest-mode gateway screen
     (auth)/                    # 🔐 Auth stack: login and signup
-    (tabs)/                    # 📱 Main bottom tabs: Home, Book, Account
+    (tabs)/                    # 📱 Main bottom tabs: Home, New Things, Book, Schedules, Account
+    auth/callback.tsx          # 🌐 Google OAuth deep-link callback handler
     booking/                   # 📅 Booking flow routes
       [serviceId].tsx          # 🪄 Stepped booking wizard
       success.tsx              # 🎉 Booking confirmation screen
@@ -80,6 +84,7 @@ Saloon_Vero_App/
 
   components/                  # 🧩 Reusable React Native components
     ui/                        # 💅 Warm Luxe UI primitives: buttons, cards, inputs, loaders
+    auth/                      # 🕶️ Auth-related UI such as the guest-mode header
     booking/                   # 📅 Booking-specific UI such as SlotPicker
     services/                  # ✂️ Service presentation components
     stylists/                  # 👤 Stylist presentation components
@@ -100,6 +105,7 @@ Saloon_Vero_App/
     api/                       # ⚡ Supabase client, direct queries, Edge Function wrappers
     auth/                      # 🌐 Google OAuth flow helpers
     booking/                   # 📆 Booking reducer and availability calculations
+    storage/                   # 🕶️ Local guest-booking persistence (AsyncStorage)
     utils/                     # 🕒 Formatters, references, avatar helpers, time utilities
     validation/                # ✅ Zod schemas for booking and customer details
 
@@ -109,7 +115,8 @@ Saloon_Vero_App/
   __tests__/                   # 🧪 Jest unit and component test suites
 
   .env.example                 # 🔑 Safe placeholder env file for setup
-  app.json                     # 📱 Expo app configuration
+  app.json                     # 📱 Expo app configuration (scheme: saloonveroapp)
+  eas.json                     # ☁️ EAS build profiles (development / preview / production)
   package.json                 # 📦 Scripts and dependencies
   tsconfig.json                # 🧠 TypeScript configuration
 ```
@@ -144,12 +151,23 @@ You can choose to open the app using:
 *   📱 **Expo Go** on a physical phone.
 *   🤖 **Android emulator** (`a` in terminal) or 🍎 **iOS simulator** (`i` in terminal).
 *   🌐 **Web browser** (`w` in terminal).
+*   🛠️ A **development build** (recommended for testing Google login on a physical Android device):
+    ```bash
+    npx eas-cli build --profile development --platform android
+    ```
+
+### 5. 🌐 Google OAuth Redirect Setup
+In the Supabase dashboard under **Authentication → URL Configuration**, add these Redirect URLs:
+*   `saloonveroapp://auth/callback` — development/production builds.
+*   `https://<your-web-domain>/auth/callback` — web.
+
+> ⚠️ **Note:** Supabase rejects redirect URLs whose host is a LAN IP (e.g. `exp://192.168.x.x:8081/...`) even when allow-listed, and silently falls back to the Site URL. The app works around this in Expo Go by rewriting the redirect host to `localhost` (see `lib/auth/google.ts`), which Supabase always allows.
 
 ---
 
 ## 🧪 Testing
 
-The codebase includes an automated test suite containing **28 tests across 12 suites**, covering state transitions, availability logic, environment validation, onboarding behavior, and custom components.
+The codebase includes an automated test suite containing **34 tests across 12 suites**, covering state transitions, availability logic, Google OAuth redirect handling, environment validation, onboarding behavior, and custom components.
 
 To run the tests:
 ```bash
