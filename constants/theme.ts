@@ -2,18 +2,20 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#2E2519', background: '#F7F1E4', tint: '#B8742A',
+    text: '#2E2519', background: '#FAF6EE', tint: '#B8742A',
     icon: '#7A6A4E', tabIconDefault: '#7A6A4E', tabIconSelected: '#B8742A',
-    bg: '#F7F1E4', bg2: '#F1E8D6', surface: '#FFFFFF',
-    accent: '#D99A3D', accentDark: '#B8742A', accentTint: '#FBEFD8', accentText: '#9A5E1C',
-    fg: '#2E2519', fg2: '#6B5D49', fgMuted: '#7A6A4E', line: '#EBE2CF', error: '#C0392B',
+    bg: '#FAF6EE', bg2: '#F3EAD7', surface: 'rgba(255, 255, 255, 0.45)',
+    accent: '#D99A3D', accentDark: '#B8742A', accentTint: 'rgba(217, 154, 61, 0.12)', accentText: '#9A5E1C',
+    fg: '#2E2519', fg2: '#5E503F', fgMuted: '#8E7D66', line: 'rgba(184, 116, 42, 0.15)', error: '#C0392B',
+    glassBg: 'rgba(255, 255, 255, 0.45)', glassBorder: 'rgba(255, 255, 255, 0.65)',
   },
   dark: {
-    text: '#F5ECDD', background: '#1C1611', tint: '#E8B05A',
+    text: '#F5ECDD', background: '#120E0A', tint: '#E8B05A',
     icon: '#9A876C', tabIconDefault: '#9A876C', tabIconSelected: '#E8B05A',
-    bg: '#1C1611', bg2: '#241C15', surface: '#2A2018',
-    accent: '#E8B05A', accentDark: '#C98F3D', accentTint: 'rgba(232,176,90,0.14)', accentText: '#E8B05A',
-    fg: '#F5ECDD', fg2: '#C7B7A0', fgMuted: '#9A876C', line: '#3A2E22', error: '#F0857E',
+    bg: '#120E0A', bg2: '#1C1611', surface: 'rgba(26, 20, 15, 0.55)',
+    accent: '#E8B05A', accentDark: '#C98F3D', accentTint: 'rgba(232,176,90,0.12)', accentText: '#E8B05A',
+    fg: '#F5ECDD', fg2: '#D2C3AF', fgMuted: '#9A876C', line: 'rgba(232, 176, 90, 0.12)', error: '#F0857E',
+    glassBg: 'rgba(26, 20, 15, 0.55)', glassBorder: 'rgba(255, 255, 255, 0.08)',
   },
 } as const;
 

@@ -30,8 +30,11 @@ export default function RootLayout() {
       <ThemeProvider value={nav}>
         <Stack screenOptions={{ contentStyle: { backgroundColor: nav.colors.background } }}>
           <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="access" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+          <Stack.Screen name="booking" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       </ThemeProvider>
