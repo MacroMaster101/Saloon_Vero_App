@@ -1,5 +1,5 @@
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { GoogleLogo } from '@/components/ui/google-logo';
 import { useTheme } from '@/hooks/use-theme';
 
 export function GoogleButton({ onPress, busy }: { onPress: () => void; busy?: boolean }) {
@@ -9,16 +9,13 @@ export function GoogleButton({ onPress, busy }: { onPress: () => void; busy?: bo
 
   const bg = isIOS
     ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.7)')
-    : (scheme === 'dark' ? '#241C16' : '#FFFFFF');
+    : (scheme === 'dark' ? '#1E1C19' : '#FFFFFF');
 
   const border = isIOS
     ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)')
-    : (scheme === 'dark' ? '#3A2E24' : '#EBE2CF');
+    : (scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : '#E6E4DF');
 
   const fg = c.fg;
-  
-  // Icon color: use Google Blue on light mode, and theme foreground on dark mode
-  const iconColor = scheme === 'dark' ? '#FAF6EE' : '#4285F4';
 
   const shadowStyle = {
     shadowColor: '#000',
@@ -33,7 +30,7 @@ export function GoogleButton({ onPress, busy }: { onPress: () => void; busy?: bo
       <Pressable
         disabled={busy}
         android_ripple={{
-          color: scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(184, 116, 42, 0.12)',
+          color: scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(168, 122, 46, 0.12)',
           borderless: false,
         }}
         onPress={onPress}
@@ -50,7 +47,7 @@ export function GoogleButton({ onPress, busy }: { onPress: () => void; busy?: bo
         ]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm }}>
-          <AntDesign name="google" size={18} color={iconColor} />
+          <GoogleLogo size={18} />
           <Text style={[Type.button, { color: fg, fontSize: 15, letterSpacing: 0.5 }]}>
             {busy ? '…' : 'Continue with Google'}
           </Text>

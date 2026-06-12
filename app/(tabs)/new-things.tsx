@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Text, View, Platform } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { getBookableServices, getGallery } from '@/lib/api/queries';
 import { money } from '@/lib/utils/format';
 import { Card } from '@/components/ui/card';
 import { ScreenContainer } from '@/components/ui/screen';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { SectionHeader } from '@/components/ui/section-header';
 import { ServiceCard } from '@/components/services/service-card';
 import { LoadingScreen } from '@/components/ui/loading';
@@ -19,7 +20,7 @@ const updates = [
 ];
 
 export default function NewThings() {
-  const { c, Radius, Spacing, Type, scheme } = useTheme();
+  const { c, Radius, Spacing, Type } = useTheme();
   const [services, setServices] = useState<Service[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,76 +38,53 @@ export default function NewThings() {
 
   if (loading) return <LoadingScreen message="Finding the latest..." />;
 
-  const isIOS = Platform.OS === 'ios';
-
   return (
     <ScreenContainer>
-      <View style={{ marginBottom: Spacing.sm }}>
-        <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 1.5, textTransform: 'uppercase' }]}>New Things</Text>
-        <Text style={[Type.h1, { color: c.fg }]}>Offers and salon updates</Text>
-        <Text style={[Type.body, { color: c.fg2, marginTop: Spacing.xs }]}>Fresh services, seasonal care, and announcements from Saloon Vero.</Text>
-      </View>
+      <ScreenHeader eyebrow="FRESH" title="New Things" />
 
-      <SectionHeader eyebrow="Today" title="Featured offers" />
-      {updates.map((item, index) => {
-        const isFirst = index === 0;
-        const bg = isFirst
-          ? c.accentTint
-          : isIOS
-            ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.55)')
-            : (scheme === 'dark' ? '#1E1712' : '#FFFFFF');
-        const border = isFirst
-          ? c.accent
-          : isIOS
-            ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(184, 116, 42, 0.15)')
-            : (scheme === 'dark' ? '#2E251E' : '#EBE2CF');
+      <SectionHeader number={1} eyebrow="Today" title="Featured offers" />
+      {updates.map((item, index) => (
+        <Animated.View key={item.title} entering={FadeInDown.delay(index * 60).duration(380)}>
+          <Pressable
+            onPress={() => offerTarget && router.push(`/booking/${offerTarget.id}`)}
+            style={{
+              borderRadius: Radius.lg,
+              backgroundColor: index === 0 ? c.accentTint : c.surfaceRaised,
+              borderWidth: 1,
+              borderColor: index === 0 ? c.accent : c.hairline,
+              padding: Spacing.md,
+              marginBottom: Spacing.sm,
+            }}>
+            <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold' }]}>{item.title}</Text>
+            <Text style={[Type.caption, { color: c.fg2, marginTop: 4, fontSize: 12 }]}>{item.body}</Text>
+            <Text style={[Type.label, { color: c.accentText, marginTop: Spacing.sm, fontFamily: 'Poppins_600SemiBold' }]}>{item.cta} ›</Text>
+          </Pressable>
+        </Animated.View>
+      ))}
 
-        return (
-          <Animated.View key={item.title} entering={FadeInDown.delay(index * 60).springify()}>
-            <Pressable
-              onPress={() => offerTarget && router.push(`/booking/${offerTarget.id}`)}
-              style={{
-                borderRadius: Radius.lg,
-                backgroundColor: bg,
-                borderWidth: 1,
-                borderColor: border,
-                padding: Spacing.md,
-                marginBottom: Spacing.sm,
-                shadowColor: '#000',
-                shadowOpacity: isFirst ? 0.05 : 0.02,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 4 },
-                elevation: 2,
-              }}>
-              <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold' }]}>{item.title}</Text>
-              <Text style={[Type.caption, { color: c.fg2, marginTop: 4, fontSize: 12 }]}>{item.body}</Text>
-              <Text style={[Type.label, { color: c.accentText, marginTop: Spacing.sm, fontFamily: 'Poppins_600SemiBold' }]}>{item.cta} ›</Text>
-            </Pressable>
-          </Animated.View>
-        );
-      })}
-
-      <SectionHeader eyebrow="Services" title="New and popular" />
+      <SectionHeader number={2} eyebrow="Services" title="New and popular" />
       {featuredServices.map((service, index) => (
-        <Animated.View key={service.id} entering={FadeInDown.delay(index * 60).springify()}>
+        <Animated.View key={service.id} entering={FadeInDown.delay(index * 60).duration(380)}>
           <ServiceCard service={service} onPress={() => router.push(`/booking/${service.id}`)} />
         </Animated.View>
       ))}
 
-      <SectionHeader eyebrow="Lookbook" title="Recent inspiration" />
+      <SectionHeader number={3} eyebrow="Lookbook" title="Recent inspiration" />
       <View style={{ gap: Spacing.xs }}>
-        {gallery.slice(0, 4).map((item) => (
-          <Card key={item.id} style={{ marginBottom: Spacing.sm }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View style={{ flex: 1 }}>
-                <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold' }]}>{item.title}</Text>
-                <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>{item.category}</Text>
+        {gallery.slice(0, 4).map((item, index) => (
+          <Animated.View key={item.id} entering={FadeInDown.delay(index * 60).duration(380)}>
+            <Card style={{ marginBottom: Spacing.sm }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold' }]}>{item.title}</Text>
+                  <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>{item.category}</Text>
+                </View>
+                <View style={{ borderRadius: Radius.pill, backgroundColor: c.accentTint, paddingHorizontal: 10, paddingVertical: 2 }}>
+                  <Text style={[Type.caption, { color: c.accentText, fontFamily: 'Poppins_600SemiBold', fontSize: 11 }]}>{item.tag}</Text>
+                </View>
               </View>
-              <View style={{ borderRadius: Radius.pill, backgroundColor: c.accentTint, paddingHorizontal: 10, paddingVertical: 2 }}>
-                <Text style={[Type.caption, { color: c.accentText, fontFamily: 'Poppins_600SemiBold', fontSize: 11 }]}>{item.tag}</Text>
-              </View>
-            </View>
-          </Card>
+            </Card>
+          </Animated.View>
         ))}
       </View>
 

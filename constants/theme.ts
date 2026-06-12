@@ -2,37 +2,43 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#2E2519', background: '#FAF6EE', tint: '#B8742A',
-    icon: '#7A6A4E', tabIconDefault: '#7A6A4E', tabIconSelected: '#B8742A',
-    bg: '#FAF6EE', bg2: '#F3EAD7', surface: 'rgba(255, 255, 255, 0.45)',
-    accent: '#D99A3D', accentDark: '#B8742A', accentTint: 'rgba(217, 154, 61, 0.12)', accentText: '#9A5E1C',
-    fg: '#2E2519', fg2: '#5E503F', fgMuted: '#8E7D66', line: 'rgba(184, 116, 42, 0.15)', error: '#C0392B',
-    glassBg: 'rgba(255, 255, 255, 0.45)', glassBorder: 'rgba(255, 255, 255, 0.65)',
+    text: '#1C1A17', background: '#FAFAF8', tint: '#A87A2E',
+    icon: '#8A857C', tabIconDefault: '#8A857C', tabIconSelected: '#A87A2E',
+    bg: '#FAFAF8', bg2: '#F1F1EE', surface: 'rgba(255, 255, 255, 0.72)',
+    surfaceRaised: '#FFFFFF', hairline: 'rgba(28, 26, 23, 0.08)',
+    accent: '#C29036', accentDark: '#A87A2E', accentTint: 'rgba(168, 122, 46, 0.10)', accentText: '#8A6420',
+    fg: '#1C1A17', fg2: '#57534C', fgMuted: '#8A857C', line: '#E6E4DF', error: '#C0392B',
+    glassBg: 'rgba(255, 255, 255, 0.62)', glassBorder: 'rgba(255, 255, 255, 0.78)',
+    ctaBg: '#1C1A17', ctaFg: '#FAFAF8',
   },
   dark: {
-    text: '#F5ECDD', background: '#120E0A', tint: '#E8B05A',
-    icon: '#9A876C', tabIconDefault: '#9A876C', tabIconSelected: '#E8B05A',
-    bg: '#120E0A', bg2: '#1C1611', surface: 'rgba(26, 20, 15, 0.55)',
-    accent: '#E8B05A', accentDark: '#C98F3D', accentTint: 'rgba(232,176,90,0.12)', accentText: '#E8B05A',
-    fg: '#F5ECDD', fg2: '#D2C3AF', fgMuted: '#9A876C', line: 'rgba(232, 176, 90, 0.12)', error: '#F0857E',
-    glassBg: 'rgba(26, 20, 15, 0.55)', glassBorder: 'rgba(255, 255, 255, 0.08)',
+    text: '#F2F0EC', background: '#121110', tint: '#D9A648',
+    icon: '#918B81', tabIconDefault: '#918B81', tabIconSelected: '#D9A648',
+    bg: '#121110', bg2: '#1A1816', surface: 'rgba(26, 24, 22, 0.60)',
+    surfaceRaised: '#1E1C19', hairline: 'rgba(255, 255, 255, 0.06)',
+    accent: '#D9A648', accentDark: '#C2933C', accentTint: 'rgba(217, 166, 72, 0.12)', accentText: '#D9A648',
+    fg: '#F2F0EC', fg2: '#C9C4BC', fgMuted: '#918B81', line: 'rgba(255, 255, 255, 0.09)', error: '#F0857E',
+    glassBg: 'rgba(22, 20, 18, 0.55)', glassBorder: 'rgba(255, 255, 255, 0.08)',
+    ctaBg: '#D9A648', ctaFg: '#121110',
   },
 } as const;
 
 export const Spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 } as const;
-export const Radius = { sm: 8, md: 12, lg: 16, pill: 999 } as const;
+export const Radius = { sm: 8, md: 12, lg: 16, xl: 20, pill: 999 } as const;
 export const Shadow = {
-  sm: { shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  md: { shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 5 },
+  sm: { shadowColor: '#1C1A17', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+  md: { shadowColor: '#1C1A17', shadowOpacity: 0.10, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 5 },
+  cta: { shadowColor: '#1C1A17', shadowOpacity: 0.28, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
 } as const;
 export const Type = {
+  display: { fontFamily: 'Poppins_800ExtraBold', fontSize: 34, lineHeight: 38 },
   h1: { fontFamily: 'Poppins_800ExtraBold', fontSize: 28 },
   h2: { fontFamily: 'Poppins_700Bold', fontSize: 20 },
   body: { fontFamily: 'Poppins_400Regular', fontSize: 15 },
   label: { fontFamily: 'Poppins_600SemiBold', fontSize: 13 },
   caption: { fontFamily: 'Poppins_400Regular', fontSize: 12 },
   button: { fontFamily: 'Poppins_700Bold', fontSize: 16 },
-  eyebrow: { fontFamily: 'Poppins_600SemiBold', fontSize: 12 },
+  eyebrow: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, letterSpacing: 2.5 },
 } as const;
 
 export const Fonts = Platform.select({

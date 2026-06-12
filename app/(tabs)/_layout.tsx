@@ -1,20 +1,34 @@
 import { useEffect } from 'react';
 import { StyleSheet, Platform } from 'react-native';
-import { Tabs, router } from 'expo-router';
+import { Tabs, router, Redirect } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { LoadingScreen } from '@/components/ui/loading';
 import { useSession } from '@/context/session';
 import { useTheme } from '@/hooks/use-theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
-  const { c, scheme } = useTheme();
-  const { user, isGuest, loading } = useSession();
+  const { c, scheme, Shadow } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { user, isGuest, loading, profile, profileReady } = useSession();
   const showLoggedTabs = !!user;
   const showGuestTabs = !user && isGuest;
 
   useEffect(() => {
     if (!loading && !user && !isGuest) router.replace('/access' as never);
   }, [loading, user, isGuest]);
+
+  // Wait for the profile before rendering: without this, staff/admin logging in
+  // see the customer tab bar flash before their workspace redirect fires.
+  if (loading || (!!user && !profileReady)) return <LoadingScreen message="Loading..." />;
+
+  // Staff guard: redirect linked staff away from customer tabs
+  // Placed after all hooks to respect rules-of-hooks
+  if (profileReady && profile?.role === 'staff' && profile.stylistId) {
+    return <Redirect href={'/(staff)/today' as never} />;
+  }
+  if (profileReady && profile?.role === 'admin') return <Redirect href={'/(admin)/today' as never} />;
 
   const isIOS = Platform.OS === 'ios';
 
@@ -25,23 +39,20 @@ export default function TabLayout() {
       tabBarInactiveTintColor: c.fgMuted,
       tabBarStyle: {
         position: 'absolute',
-        bottom: isIOS ? 24 : 16,
+        // Android is edge-to-edge: keep the dock above the system nav bar.
+        bottom: isIOS ? 24 : 16 + insets.bottom,
         left: 16,
         right: 16,
         height: 64,
         borderRadius: 32,
-        backgroundColor: isIOS 
-          ? (scheme === 'dark' ? 'rgba(26, 20, 15, 0.45)' : 'rgba(255, 255, 255, 0.4)')
-          : (scheme === 'dark' ? '#1E1712' : '#FFFFFF'),
+        backgroundColor: isIOS
+          ? c.glassBg
+          : c.surfaceRaised,
         borderWidth: 1,
         borderColor: isIOS
-          ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(184, 116, 42, 0.15)')
-          : (scheme === 'dark' ? '#2E251E' : '#EBE2CF'),
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 6,
+          ? c.glassBorder
+          : c.hairline,
+        ...Shadow.sm,
         overflow: 'hidden',
         borderTopWidth: 0,
         paddingBottom: 0,
@@ -58,7 +69,8 @@ export default function TabLayout() {
     }}>
       <Tabs.Screen name="index" options={{ title: 'Home', href: showLoggedTabs ? undefined : null, tabBarIcon: ({ color }) => <IconSymbol name="house.fill" color={color} /> }} />
       <Tabs.Screen name="new-things" options={{ title: 'New Things', href: showLoggedTabs ? undefined : null, tabBarIcon: ({ color }) => <IconSymbol name="sparkles" color={color} /> }} />
-      <Tabs.Screen name="book" options={{ title: 'Book', href: showLoggedTabs || showGuestTabs ? undefined : null, tabBarIcon: ({ color }) => <IconSymbol name="calendar" color={color} /> }} />
+      {/* Shadow.cta is iOS-only here: Android renders the elevation as a literal grey box behind the tab item. */}
+      <Tabs.Screen name="book" options={{ title: 'Book', href: showLoggedTabs || showGuestTabs ? undefined : null, tabBarIcon: ({ color }) => <IconSymbol name="calendar" color={color} />, tabBarItemStyle: isIOS ? { ...Shadow.cta } : undefined }} />
       <Tabs.Screen name="schedules" options={{ title: 'Schedules', href: showLoggedTabs || showGuestTabs ? undefined : null, tabBarIcon: ({ color }) => <IconSymbol name="clock.fill" color={color} /> }} />
       <Tabs.Screen name="account" options={{ title: 'Account', href: showLoggedTabs ? undefined : null, tabBarIcon: ({ color }) => <IconSymbol name="person.fill" color={color} /> }} />
     </Tabs>

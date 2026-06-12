@@ -31,6 +31,8 @@ describe('EntryScreen / Splash & Onboarding Flow', () => {
       user: null,
       loading: true,
       isGuest: false,
+      profile: null,
+      profileReady: true,
     });
     (AsyncStorage.getItem as jest.Mock).mockReturnValue(Promise.resolve(null));
 
@@ -50,6 +52,8 @@ describe('EntryScreen / Splash & Onboarding Flow', () => {
       user: null,
       loading: false,
       isGuest: false,
+      profile: null,
+      profileReady: true,
     });
     // Simulating no 'has_seen_welcome' key (first-time user)
     (AsyncStorage.getItem as jest.Mock).mockReturnValue(Promise.resolve(null));
@@ -69,6 +73,8 @@ describe('EntryScreen / Splash & Onboarding Flow', () => {
       user: { id: 'user-1' },
       loading: false,
       isGuest: false,
+      profile: null,
+      profileReady: true,
     });
     // Simulating user has already seen welcome screen
     (AsyncStorage.getItem as jest.Mock).mockReturnValue(Promise.resolve('true'));
@@ -85,6 +91,8 @@ describe('EntryScreen / Splash & Onboarding Flow', () => {
       user: null,
       loading: false,
       isGuest: true,
+      profile: null,
+      profileReady: true,
     });
     (AsyncStorage.getItem as jest.Mock).mockReturnValue(Promise.resolve('true'));
 
@@ -100,6 +108,8 @@ describe('EntryScreen / Splash & Onboarding Flow', () => {
       user: null,
       loading: false,
       isGuest: false,
+      profile: null,
+      profileReady: true,
     });
     (AsyncStorage.getItem as jest.Mock).mockReturnValue(Promise.resolve(null));
 

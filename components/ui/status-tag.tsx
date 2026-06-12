@@ -18,9 +18,9 @@ export function StatusTag({ status }: { status: string }) {
   
   let bg = '';
   if (status === 'confirmed') {
-    bg = scheme === 'dark' ? 'rgba(232, 176, 90, 0.12)' : 'rgba(217, 154, 61, 0.12)';
+    bg = scheme === 'dark' ? 'rgba(217, 166, 72, 0.12)' : 'rgba(168, 122, 46, 0.10)';
   } else if (status === 'completed') {
-    bg = scheme === 'dark' ? 'rgba(210, 195, 175, 0.10)' : 'rgba(94, 80, 63, 0.08)';
+    bg = scheme === 'dark' ? 'rgba(201, 196, 188, 0.10)' : 'rgba(87, 83, 76, 0.08)';
   } else if (status === 'cancelled' || status === 'no_show') {
     bg = scheme === 'dark' ? 'rgba(240, 133, 126, 0.12)' : 'rgba(192, 57, 43, 0.12)';
   } else {
@@ -33,8 +33,8 @@ export function StatusTag({ status }: { status: string }) {
       borderWidth: 1, 
       borderColor: color, 
       backgroundColor: bg, 
-      paddingHorizontal: 12, 
-      paddingVertical: 4,
+      paddingHorizontal: 14,
+      paddingVertical: 5,
       alignSelf: 'flex-start'
     }}>
       <Text style={[Type.caption, { color, textTransform: 'capitalize', fontFamily: 'Poppins_600SemiBold', fontSize: 11 }]}>

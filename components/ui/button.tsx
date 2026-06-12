@@ -2,10 +2,10 @@ import { Pressable, Text, ViewStyle, StyleSheet, Platform } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useTheme } from '@/hooks/use-theme';
 
-type Variant = 'primary' | 'secondary' | 'social';
+type Variant = 'primary' | 'secondary' | 'destructive' | 'social';
 
 export function ThemedButton({ label, onPress, variant = 'primary', busy = false, style }: { label: string; onPress?: () => void; variant?: Variant; busy?: boolean; style?: ViewStyle }) {
-  const { c, Radius, Type, Spacing, scheme } = useTheme();
+  const { c, Radius, Type, Spacing, Shadow, scheme } = useTheme();
   const scale = useSharedValue(1);
   const aStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -17,54 +17,53 @@ export function ThemedButton({ label, onPress, variant = 'primary', busy = false
   let border = '';
 
   if (variant === 'primary') {
-    bg = c.accentDark;
-    fg = '#FFFFFF';
-    border = isIOS 
-      ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.3)')
-      : c.accentDark;
+    bg = c.ctaBg;
+    fg = c.ctaFg;
+    border = isIOS
+      ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.25)')
+      : c.ctaBg;
   } else if (variant === 'secondary') {
-    if (isIOS) {
-      bg = scheme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.6)';
-      border = scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(184, 116, 42, 0.25)';
-    } else {
-      bg = scheme === 'dark' ? '#2A2018' : '#FAF6EE';
-      border = scheme === 'dark' ? '#3E3024' : '#EBE2CF';
-    }
+    // Ghost look: transparent background with c.line border
+    bg = 'transparent';
+    border = c.line;
     fg = c.accentText;
+  } else if (variant === 'destructive') {
+    // Ghost-destructive: transparent bg, error-coloured border and text — readable in both schemes
+    bg = 'transparent';
+    fg = c.error;
+    border = c.error;
   } else {
     // social variant
     if (isIOS) {
       bg = scheme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.7)';
       border = scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
     } else {
-      bg = scheme === 'dark' ? '#241C16' : '#FFFFFF';
-      border = scheme === 'dark' ? '#3A2E24' : '#EBE2CF';
+      bg = scheme === 'dark' ? '#1E1C19' : '#FFFFFF';
+      border = scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : '#E6E4DF';
     }
     fg = c.fg;
   }
 
-  const shadowStyle = variant === 'primary' 
-    ? {
-        shadowColor: c.accentDark,
-        shadowOpacity: 0.25,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 3,
-      }
-    : {
-        shadowColor: '#000',
-        shadowOpacity: 0.03,
-        shadowRadius: 4,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 1,
-      };
+  // Primary enabled: Shadow.cta; primary busy: no shadow; ghost variants (secondary/destructive): no shadow
+  // to avoid Android elevation artifact under a transparent pill. Social keeps a subtle shadow.
+  const shadowStyle = variant === 'primary' && !busy
+    ? Shadow.cta
+    : variant === 'primary' || variant === 'secondary' || variant === 'destructive'
+      ? {}
+      : {
+          shadowColor: '#000',
+          shadowOpacity: 0.03,
+          shadowRadius: 4,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 1,
+        };
 
   return (
     <Animated.View style={aStyle}>
       <Pressable
         disabled={busy}
         android_ripple={{
-          color: variant === 'primary' ? 'rgba(255, 255, 255, 0.18)' : 'rgba(184, 116, 42, 0.12)',
+          color: variant === 'primary' ? (scheme === 'dark' ? 'rgba(18, 17, 16, 0.18)' : 'rgba(255, 255, 255, 0.18)') : 'rgba(168, 122, 46, 0.12)',
           borderless: false,
         }}
         onPressIn={() => { scale.value = withTiming(0.96, { duration: 80 }); }}
@@ -75,9 +74,14 @@ export function ThemedButton({ label, onPress, variant = 'primary', busy = false
           {
             backgroundColor: bg,
             borderColor: border,
-            borderRadius: Radius.md,
+            borderRadius: Radius.pill,
+            minHeight: 52,
             paddingVertical: Spacing.md - 2,
             paddingHorizontal: Spacing.md,
+            // Android masks bounded ripples with the background drawable; transparent
+            // ghost variants get a square ripple unless we clip to the pill shape.
+            // (These variants carry no elevation, so overflow:hidden costs nothing.)
+            overflow: bg === 'transparent' ? 'hidden' : undefined,
           },
           shadowStyle,
           style

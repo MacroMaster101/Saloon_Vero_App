@@ -1,25 +1,28 @@
 import { useEffect, useState } from 'react';
-import { Image, Platform, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { signInWithGoogle } from '@/lib/auth/google';
 import { useSession } from '@/context/session';
+import { routeForSession } from '@/lib/auth/routing';
 import { ScreenContainer } from '@/components/ui/screen';
 import { Card } from '@/components/ui/card';
 import { ThemedButton } from '@/components/ui/button';
+import { ThemeToggleButton } from '@/components/ui/theme-toggle-button';
 import { GoogleButton } from '@/components/ui/google-button';
 import { LoadingScreen } from '@/components/ui/loading';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function AccessScreen() {
   const { c, Radius, Spacing, Type, Shadow } = useTheme();
-  const { user, loading, continueAsGuest } = useSession();
+  const { user, loading, continueAsGuest, profile, profileReady, isGuest } = useSession();
   const [error, setError] = useState<string | null>(null);
   const [guestBusy, setGuestBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) router.replace('/(tabs)');
-  }, [loading, user]);
+    if (!loading && profileReady && user)
+      router.replace((routeForSession(user, profile, isGuest) ?? '/(tabs)') as never);
+  }, [loading, profileReady, user, profile, isGuest]);
 
   async function guest() {
     setGuestBusy(true);
@@ -35,26 +38,27 @@ export default function AccessScreen() {
     const res = await signInWithGoogle();
     setGoogleBusy(false);
     if (!res.ok) return setError(res.message);
-    router.replace('/(tabs)');
+    // routing will be handled by the useEffect above once profile loads
   }
 
   if (loading || user) return <LoadingScreen message="Preparing your access..." />;
 
   return (
     <ScreenContainer scroll={false} style={{ justifyContent: 'center' }}>
+      {/* Floating ThemeToggleButton */}
+      <View style={{ position: 'absolute', top: Spacing.sm, right: Spacing.md, zIndex: 10 }}>
+        <ThemeToggleButton />
+      </View>
+
       <View style={{ alignItems: 'center', marginBottom: Spacing.xl }}>
         <View
           style={[{
             width: 100,
             height: 100,
             borderRadius: 50,
-            backgroundColor: Platform.OS === 'ios'
-              ? 'rgba(255, 255, 255, 0.5)'
-              : '#FFFFFF',
+            backgroundColor: c.surfaceRaised,
             borderWidth: 1.5,
-            borderColor: Platform.OS === 'ios'
-              ? 'rgba(255, 255, 255, 0.45)'
-              : '#EBE2CF',
+            borderColor: c.hairline,
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
@@ -71,7 +75,7 @@ export default function AccessScreen() {
       </View>
 
       <Card style={{ gap: Spacing.md, borderRadius: Radius.lg, padding: Spacing.lg }}>
-        <ThemedButton label="Continue as Guest" busy={guestBusy} onPress={guest} />
+        <ThemedButton variant="secondary" label="Continue as Guest" busy={guestBusy} onPress={guest} />
         
         <GoogleButton busy={googleBusy} onPress={google} />
 

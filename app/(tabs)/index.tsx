@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View, Text, RefreshControl } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { getMyBookings, getServices, getStylists } from '@/lib/api/queries';
 import { ServiceCard } from '@/components/services/service-card';
@@ -8,6 +9,7 @@ import { StylistCard } from '@/components/stylists/stylist-card';
 import { Card } from '@/components/ui/card';
 import { ScreenContainer } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { useTheme } from '@/hooks/use-theme';
 import { useSession } from '@/context/session';
 import { LoadingScreen } from '@/components/ui/loading';
@@ -17,13 +19,14 @@ type BookingPreview = { reference: string; starts_at: string; status: string };
 const whenFmt = new Intl.DateTimeFormat('en-LK', { timeZone: 'Asia/Colombo', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true });
 
 export default function Home() {
-  const { c, Radius, Type, Spacing, scheme } = useTheme();
+  const { c, Radius, Type, Spacing, Shadow } = useTheme();
   const { user, loading: sessionLoading } = useSession();
   const [services, setServices] = useState<Service[]>([]);
   const [stylists, setStylists] = useState<Stylist[]>([]);
   const [bookings, setBookings] = useState<BookingPreview[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const hasAnimated = useRef(false);
   const userId = user?.id;
 
   const load = useCallback(async () => {
@@ -55,29 +58,56 @@ export default function Home() {
     });
   }, [sessionLoading, user, load]);
 
+  // Flip after the first data render commits so the initial cascade plays once,
+  // and pull-to-refresh re-renders don't replay it.
+  useEffect(() => {
+    if (!loading) hasAnimated.current = true;
+  }, [loading]);
+
   if (sessionLoading || loading || !user) {
     return <LoadingScreen message="Loading Saloon Vero..." />;
   }
+
+  const entering = (i: number) => (hasAnimated.current ? undefined : FadeInDown.delay(i * 60).duration(380));
 
   const firstName = ((user.user_metadata?.full_name as string | undefined) ?? user.email ?? 'there').split(' ')[0];
   const upcoming = bookings.find((booking) => booking.status === 'confirmed' && new Date(booking.starts_at).getTime() >= Date.now());
 
   return (
     <ScreenContainer refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.accent} />}>
-      <View style={{ marginBottom: Spacing.sm }}>
-        <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 1.5 }]}>WELCOME BACK</Text>
-        <Text style={[Type.h1, { color: c.fg }]}>Hi, {firstName}</Text>
-        <Text style={[Type.body, { color: c.fg2 }]}>Cuts, colour and care booked in seconds.</Text>
-      </View>
+      <ScreenHeader eyebrow="WELCOME BACK" title={`Hi, ${firstName}`} subtitle="Cuts, colour and care — booked in seconds." />
 
-      <Card style={{ backgroundColor: c.accentTint, borderColor: c.accent, marginBottom: Spacing.md, padding: Spacing.md }}>
+      <LinearGradient
+        colors={[c.accentTint, c.bg2]}
+        style={{
+          borderWidth: 1,
+          borderColor: c.accent,
+          borderRadius: Radius.xl,
+          padding: Spacing.lg,
+          marginBottom: Spacing.md,
+          ...Shadow.md,
+        }}
+      >
         <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'Poppins_600SemiBold' }]}>Saloon Vero</Text>
         <Text style={[Type.h2, { color: c.fg, marginTop: 4, letterSpacing: 0.2 }]}>Redefine Your Look</Text>
         <Text style={[Type.body, { color: c.fg2, marginTop: 4, fontSize: 14 }]}>Premium styling, real-time appointments, and stylists ready for your next visit.</Text>
-      </Card>
- 
-      <SectionHeader eyebrow="Next up" title="Upcoming booking" />
-      <Card style={{ marginBottom: Spacing.sm, borderColor: upcoming ? c.accent : 'rgba(255,255,255,0.1)' }}>
+        <Pressable
+          onPress={() => router.push('/(tabs)/book')}
+          style={{
+            alignSelf: 'flex-start',
+            marginTop: Spacing.md,
+            backgroundColor: c.fg,
+            borderRadius: Radius.pill,
+            paddingHorizontal: Spacing.md,
+            paddingVertical: Spacing.sm,
+          }}
+        >
+          <Text style={[Type.label, { color: c.bg, fontFamily: 'Poppins_600SemiBold', fontSize: 13 }]}>Book now</Text>
+        </Pressable>
+      </LinearGradient>
+
+      <SectionHeader number={1} eyebrow="Next up" title="Upcoming booking" />
+      <Card style={{ marginBottom: Spacing.sm, borderColor: upcoming ? c.accent : c.hairline }}>
         {upcoming ? (
           <View style={{ gap: Spacing.xs }}>
             <Text style={[Type.label, { color: c.fg, fontSize: 16 }]}>{upcoming.reference}</Text>
@@ -91,44 +121,43 @@ export default function Home() {
           </View>
         )}
       </Card>
- 
-      <SectionHeader eyebrow="Shortcuts" title="Quick actions" />
+
+      <SectionHeader number={2} eyebrow="Shortcuts" title="Quick actions" />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.sm }}>
-        {[
+        {([
           ['Book Now', '/(tabs)/book', '✂️'],
           ['View Schedules', '/(tabs)/schedules', '📅'],
           ['New Things', '/(tabs)/new-things', '✨'],
-        ].map(([label, href, icon]) => (
-          <Pressable
-            key={label}
-            onPress={() => router.push(href as never)}
-            android_ripple={{ color: scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(184, 116, 42, 0.12)' }}
-            style={{ 
-              width: '48%', 
-              borderRadius: Radius.md, 
-              backgroundColor: scheme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.55)', 
-              borderWidth: 1, 
-              borderColor: scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(184, 116, 42, 0.15)', 
-              padding: Spacing.md,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: Spacing.sm
-            }}>
-            <Text style={{ fontSize: 18 }}>{icon}</Text>
-            <Text style={[Type.label, { color: c.fg, flex: 1, fontSize: 13, fontFamily: 'Poppins_600SemiBold' }]}>{label}</Text>
-          </Pressable>
+        ] as const).map(([label, href, icon], index) => (
+          <Animated.View key={label} entering={entering(index)} style={{ width: '48%' }}>
+            <Pressable
+              onPress={() => router.push(href as never)}
+              style={{
+                borderRadius: Radius.md,
+                backgroundColor: c.surfaceRaised,
+                borderWidth: 1,
+                borderColor: c.hairline,
+                padding: Spacing.md,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: Spacing.sm,
+              }}>
+              <Text style={{ fontSize: 18 }}>{icon}</Text>
+              <Text style={[Type.label, { color: c.fg, flex: 1, fontSize: 13, fontFamily: 'Poppins_600SemiBold' }]}>{label}</Text>
+            </Pressable>
+          </Animated.View>
         ))}
       </View>
 
-      <SectionHeader eyebrow="Services" title="What we offer" />
+      <SectionHeader number={3} eyebrow="Services" title="What we offer" />
       {services.map((s, i) => (
-        <Animated.View key={s.id} entering={FadeInDown.delay(i * 50).springify()}>
+        <Animated.View key={s.id} entering={entering(i)}>
           <ServiceCard service={s} onPress={() => router.push(`/booking/${s.id}`)} />
         </Animated.View>
       ))}
-      <SectionHeader eyebrow="Our team" title="Meet the stylists" />
+      <SectionHeader number={4} eyebrow="Our team" title="Meet the stylists" />
       {stylists.map((s, i) => (
-        <Animated.View key={s.id} entering={FadeInDown.delay(i * 50).springify()}>
+        <Animated.View key={s.id} entering={entering(i)}>
           <StylistCard stylist={s} />
         </Animated.View>
       ))}
