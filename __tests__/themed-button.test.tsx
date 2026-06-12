@@ -12,3 +12,9 @@ test('shows busy label and is not pressable when busy', () => {
   fireEvent.press(getByText('…'));
   expect(onPress).not.toHaveBeenCalled();
 });
+test('destructive variant renders label and fires onPress', () => {
+  const onPress = jest.fn();
+  const { getByText } = render(<ThemedButton label="Sign out" variant="destructive" onPress={onPress} />);
+  fireEvent.press(getByText('Sign out'));
+  expect(onPress).toHaveBeenCalled();
+});

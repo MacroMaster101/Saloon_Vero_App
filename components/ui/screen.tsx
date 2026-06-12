@@ -9,14 +9,14 @@ export function ScreenContainer({ children, scroll = true, style, refreshControl
   // Custom glowing blobs tailored for light & dark themes
   const blobColors = scheme === 'dark' 
     ? {
-        blob1: 'rgba(232, 176, 90, 0.06)',
-        blob2: 'rgba(184, 116, 42, 0.05)',
-        blob3: 'rgba(217, 154, 61, 0.04)',
+        blob1: 'rgba(217, 166, 72, 0.04)',
+        blob2: 'rgba(217, 166, 72, 0.03)',
+        blob3: 'rgba(217, 166, 72, 0.02)',
       }
     : {
-        blob1: 'rgba(232, 176, 90, 0.14)',
-        blob2: 'rgba(184, 116, 42, 0.10)',
-        blob3: 'rgba(217, 154, 61, 0.08)',
+        blob1: 'rgba(168, 122, 46, 0.05)',
+        blob2: 'rgba(168, 122, 46, 0.04)',
+        blob3: 'rgba(168, 122, 46, 0.03)',
       };
 
   const isIOS = Platform.OS === 'ios';

@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import { useTheme } from '@/hooks/use-theme';
 
 export function Card({ children, style }: { children: ReactNode; style?: ViewStyle }) {
-  const { Radius, Shadow, Spacing, scheme } = useTheme();
+  const { c, Radius, Shadow, Spacing, scheme } = useTheme();
 
   // Destructure layout styles to apply on the outer container, 
   // and inner styles for the padding container.
@@ -47,7 +47,7 @@ export function Card({ children, style }: { children: ReactNode; style?: ViewSty
     left,
     right,
     zIndex,
-    borderRadius: style?.borderRadius ?? Radius.lg,
+    borderRadius: style?.borderRadius ?? Radius.xl,
   };
 
   const isIOS = Platform.OS === 'ios';
@@ -61,8 +61,8 @@ export function Card({ children, style }: { children: ReactNode; style?: ViewSty
           outerStyles, 
           { 
             borderWidth: style?.borderWidth ?? 1,
-            borderColor: style?.borderColor ?? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(184, 116, 42, 0.15)'),
-            backgroundColor: style?.backgroundColor ?? (scheme === 'dark' ? 'rgba(26, 20, 15, 0.72)' : 'rgba(255, 255, 255, 0.65)'),
+            borderColor: style?.borderColor ?? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(28, 26, 23, 0.08)'),
+            backgroundColor: style?.backgroundColor ?? (scheme === 'dark' ? 'rgba(24, 22, 20, 0.72)' : 'rgba(255, 255, 255, 0.70)'),
             overflow: 'hidden',
           },
           Shadow.sm
@@ -81,9 +81,9 @@ export function Card({ children, style }: { children: ReactNode; style?: ViewSty
       style={[
         outerStyles,
         {
-          backgroundColor: style?.backgroundColor ?? (scheme === 'dark' ? '#1E1712' : '#FFFFFF'),
+          backgroundColor: style?.backgroundColor ?? c.surfaceRaised,
           borderWidth: style?.borderWidth ?? 1,
-          borderColor: style?.borderColor ?? (scheme === 'dark' ? '#2E251E' : '#EBE2CF'),
+          borderColor: style?.borderColor ?? c.line,
           padding: Spacing.md,
           ...innerStyles,
         },

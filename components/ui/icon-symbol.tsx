@@ -22,7 +22,13 @@ const MAPPING = {
   'calendar': 'calendar-today',
   'clock.fill': 'schedule',
   'person.fill': 'person',
+  'gearshape.fill': 'settings',
   'sparkles': 'auto-awesome',
+  'sun.max.fill': 'wb-sunny',
+  'moon.fill': 'dark-mode',
+  'circle.lefthalf.filled': 'contrast',
+  'eye': 'visibility',
+  'eye.slash': 'visibility-off',
 } as IconMapping;
 
 /**

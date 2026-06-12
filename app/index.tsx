@@ -1,5 +1,7 @@
 import { ThemedButton } from '@/components/ui/button';
+import { ThemeToggleButton } from '@/components/ui/theme-toggle-button';
 import { useSession } from '@/context/session';
+import { routeForSession } from '@/lib/auth/routing';
 import { useTheme } from '@/hooks/use-theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -14,16 +16,12 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SPLASH_DELAY_MS = process.env.NODE_ENV === 'test' ? 0 : 3000;
 
 export default function EntryScreen() {
-  const { user, loading: sessionLoading, isGuest } = useSession();
+  const { user, loading: sessionLoading, isGuest, profile, profileReady } = useSession();
   const { c, scheme, Spacing, Type, Radius } = useTheme();
-  
+
   const featureItemStyle = {
-    backgroundColor: Platform.OS === 'ios'
-      ? (scheme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.5)')
-      : (scheme === 'dark' ? '#120E0A' : '#FAF6EE'),
-    borderColor: Platform.OS === 'ios'
-      ? (scheme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)')
-      : (scheme === 'dark' ? '#2E251E' : '#EBE2CF'),
+    backgroundColor: c.surfaceRaised,
+    borderColor: c.hairline,
   };
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
   const [delayFinished, setDelayFinished] = useState(process.env.NODE_ENV === 'test');
@@ -84,19 +82,23 @@ export default function EntryScreen() {
   }, [logoRotation, logoScale]);
 
   useEffect(() => {
-    // Once both welcome check, session check, and minimum timer are loaded
-    if (isFirstTime === null || sessionLoading || !delayFinished) return;
+    // Once both welcome check, session check, profile check, and minimum timer are loaded
+    if (isFirstTime === null || sessionLoading || !profileReady || !delayFinished) return;
 
     if (!isFirstTime) {
-      if (user) {
-        router.replace('/(tabs)');
-      } else if (isGuest) {
+      if (isGuest) {
+        // Guests always land on the booking tab
         router.replace('/(tabs)/book');
       } else {
-        router.replace('/access' as never);
+        const dest = routeForSession(user, profile, isGuest);
+        if (dest !== null) {
+          router.replace(dest as never);
+        } else {
+          router.replace('/access' as never);
+        }
       }
     }
-  }, [isFirstTime, sessionLoading, delayFinished, user, isGuest]);
+  }, [isFirstTime, sessionLoading, profileReady, delayFinished, user, profile, isGuest]);
 
   // Actions
   const handleGetStarted = async () => {
@@ -113,9 +115,7 @@ export default function EntryScreen() {
   }));
 
   // Render Splash Loader
-  if (isFirstTime === null || sessionLoading || !delayFinished || !isFirstTime) {
-    const overlayColor = scheme === 'dark' ? 'rgba(18, 14, 10, 0.75)' : 'rgba(250, 246, 238, 0.75)';
-    
+  if (isFirstTime === null || sessionLoading || !profileReady || !delayFinished || !isFirstTime) {
     return (
       <View style={styles.container}>
         {/* Full-bleed background graphic */}
@@ -124,13 +124,21 @@ export default function EntryScreen() {
           style={StyleSheet.absoluteFillObject}
           resizeMode="cover"
         />
-        {/* Glassy backdrop blur overlay */}
-        <BlurView
-          intensity={55}
-          tint={scheme === 'dark' ? 'dark' : 'light'}
-          style={StyleSheet.absoluteFillObject}
+        {/* Glassy backdrop blur overlay — iOS only; expo-blur on Android only tints,
+            leaving a washed-out image, so Android gets a near-solid scrim instead. */}
+        {Platform.OS === 'ios' && (
+          <BlurView
+            intensity={55}
+            tint={scheme === 'dark' ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFillObject}
+          />
+        )}
+        <View
+          style={[
+            StyleSheet.absoluteFillObject,
+            Platform.OS === 'ios' ? { backgroundColor: c.glassBg } : { backgroundColor: c.bg, opacity: 0.92 },
+          ]}
         />
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: overlayColor }]} />
         
         <View style={[styles.splashContent, { flex: 1, justifyContent: 'center' }]}>
           {/* Designed premium splash logo mark */}
@@ -139,7 +147,7 @@ export default function EntryScreen() {
             <Animated.View style={[styles.outerRing, { borderColor: c.accent, borderStyle: 'dashed' }, animatedOuterRingStyle]} />
             
             {/* Pulsing inner circle containing the official logo */}
-            <Animated.View style={[styles.logoCircle, { backgroundColor: 'rgba(255, 255, 255, 0.85)', borderColor: 'rgba(255,255,255,0.4)' }, animatedLogoStyle]}>
+            <Animated.View style={[styles.logoCircle, { backgroundColor: c.surfaceRaised, borderColor: c.hairline }, animatedLogoStyle]}>
               <Image
                 source={require('@/assets/images/logo.jpg')}
                 style={styles.logoImage}
@@ -157,7 +165,7 @@ export default function EntryScreen() {
 
           {/* Progress bar and counter */}
           <View style={styles.progressContainer}>
-            <View style={[styles.progressBarBg, { backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+            <View style={[styles.progressBarBg, { backgroundColor: c.line }]}>
               <View style={[styles.progressBarFill, { backgroundColor: c.accent, width: `${progress}%` }]} />
             </View>
             <Text style={[Type.caption, { color: c.fg2, fontFamily: 'Poppins_600SemiBold', textAlign: 'center', marginTop: 8 }]}>
@@ -172,6 +180,11 @@ export default function EntryScreen() {
   // Render Onboarding Welcome Screen
   return (
     <ScreenContainer scroll={false} style={{ padding: 0 }}>
+      {/* Floating ThemeToggleButton */}
+      <View style={{ position: 'absolute', top: Spacing.sm, right: Spacing.md, zIndex: 10 }}>
+        <ThemeToggleButton />
+      </View>
+
       {/* Top Graphic */}
       <View style={[styles.heroContainer, { height: SCREEN_HEIGHT * 0.4 }]}>
         <Image
@@ -179,12 +192,15 @@ export default function EntryScreen() {
           style={styles.heroImage}
           resizeMode="cover"
         />
-        {/* Subtle overlay gradient */}
-        <BlurView
-          intensity={15}
-          tint="dark"
-          style={StyleSheet.absoluteFillObject}
-        />
+        {/* Subtle overlay blur — iOS only (no real blur on Android; the crisp image looks better
+            than expo-blur's flat tint there). */}
+        {Platform.OS === 'ios' && (
+          <BlurView
+            intensity={15}
+            tint="dark"
+            style={StyleSheet.absoluteFillObject}
+          />
+        )}
         <View style={styles.overlay} />
       </View>
 
@@ -195,7 +211,7 @@ export default function EntryScreen() {
             <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 1.5, textTransform: 'uppercase' }]}>
               Welcome to Saloon Vero
             </Text>
-            <Text style={[Type.h1, { color: c.fg, marginTop: Spacing.xs, lineHeight: 32, fontSize: 24 }]}>
+            <Text style={[Type.display, { color: c.fg, marginTop: Spacing.xs }]}>
               Redefine Your Style, Effortlessly
             </Text>
             <Text style={[Type.body, { color: c.fg2, marginTop: Spacing.xs, marginBottom: Spacing.md, fontSize: 14 }]}>
@@ -232,7 +248,7 @@ export default function EntryScreen() {
 
           {/* Action Button */}
           <Animated.View entering={FadeInDown.delay(650).duration(500)} style={{ marginTop: Spacing.md }}>
-            <ThemedButton label="Get Started" onPress={handleGetStarted} />
+            <ThemedButton variant="primary" label="Get Started" onPress={handleGetStarted} />
           </Animated.View>
         </Card>
       </View>
@@ -268,10 +284,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
     elevation: 3,
   },
   logoImage: {
@@ -306,7 +318,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(28, 22, 17, 0.15)',
+    backgroundColor: 'transparent',
   },
   contentContainer: {
     flex: 1,

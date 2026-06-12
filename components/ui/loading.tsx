@@ -46,7 +46,7 @@ export function LoadingScreen({ message = 'Loading...', fullScreen = true }: { m
           <Animated.View style={[styles.outerRing, { borderColor: c.accent, borderStyle: 'dashed' }, animatedOuterStyle]} />
           
           {/* Pulsing inner monogram container containing the official logo */}
-          <Animated.View style={[styles.innerCircle, { backgroundColor: '#FFFFFF', borderColor: c.line }, animatedInnerStyle]}>
+          <Animated.View style={[styles.innerCircle, { backgroundColor: c.surfaceRaised, borderColor: c.line }, animatedInnerStyle]}>
             <Image
               source={require('@/assets/images/logo.jpg')}
               style={styles.logoImage}
