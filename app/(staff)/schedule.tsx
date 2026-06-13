@@ -86,6 +86,7 @@ export default function Schedule() {
 
   return (
     <ScreenContainer
+      safeTop={false}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}

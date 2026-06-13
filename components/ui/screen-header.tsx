@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/hooks/use-theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function ScreenHeader({ eyebrow, title, subtitle, left, right }: {
   eyebrow?: string;
@@ -11,12 +12,15 @@ export function ScreenHeader({ eyebrow, title, subtitle, left, right }: {
   right?: ReactNode;
 }) {
   const { c, Spacing, Type } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
     <LinearGradient
       colors={[c.bg2, c.bg]}
       style={{
         marginHorizontal: -Spacing.md, // bleed past ScreenContainer padding
-        paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: Spacing.md,
+        paddingHorizontal: Spacing.md, 
+        paddingTop: insets.top + Spacing.sm, 
+        paddingBottom: Spacing.md,
         borderBottomWidth: 1, borderBottomColor: c.hairline, marginBottom: Spacing.sm,
       }}
     >

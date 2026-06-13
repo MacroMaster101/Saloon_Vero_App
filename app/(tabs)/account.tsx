@@ -24,7 +24,7 @@ type Booking = { reference: string; starts_at: string; status: string };
 const whenFmt = new Intl.DateTimeFormat('en-LK', { timeZone: 'Asia/Colombo', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true });
 
 export default function Account() {
-  const { c, Type, Spacing, scheme } = useTheme();
+  const { c, Type, Spacing, Radius, scheme } = useTheme();
   const { pref, setPref } = useThemePreference();
   const { user, loading, signOut } = useSession();
   const [name, setName] = useState(''); const [phone, setPhone] = useState('');
@@ -62,20 +62,20 @@ export default function Account() {
   if (!user) return null;
   const src = avatarSrc(user.user_metadata as any, user.email ?? name);
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="YOUR SPACE" title="Account" />
 
       <View style={{ alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.lg, marginTop: Spacing.md }}>
         <View style={{
-          padding: 4,
-          borderRadius: 50,
+          padding: Spacing.xs,
+          borderRadius: Radius.pill,
           borderWidth: 2,
           borderColor: c.accentTint,
           backgroundColor: c.surfaceRaised,
         }}>
-          <Image source={{ uri: src }} style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: c.bg2 }} contentFit="cover" />
+          <Image source={{ uri: src }} style={{ width: 88, height: 88, borderRadius: Radius.pill, backgroundColor: c.bg2 }} contentFit="cover" />
         </View>
-        <Text onPress={pickAvatar} style={[Type.label, { color: c.accentText, fontFamily: 'Poppins_600SemiBold', marginTop: 4 }]}>Change photo</Text>
+        <Text onPress={pickAvatar} style={[Type.label, { color: c.accentText, fontFamily: 'Poppins_600SemiBold', marginTop: Spacing.xs }]}>Change photo</Text>
       </View>
 
       <SectionHeader number={1} eyebrow="Preferences" title="Appearance" />
@@ -104,7 +104,7 @@ export default function Account() {
 
       <SectionHeader number={3} eyebrow="History" title="My bookings" />
       {bookings.length === 0 ? (
-        <Text style={[Type.body, { color: c.fgMuted, paddingHorizontal: Spacing.sm }]}>No bookings yet.</Text>
+        <Text style={[Type.body, { color: c.fgMuted, textAlign: 'center', paddingVertical: Spacing.md }]}>No bookings yet.</Text>
       ) : bookings.map((b) => (
         <Card key={b.reference} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm }}>
           <View>

@@ -72,7 +72,7 @@ export default function Stylists() {
   // Edit mode
   if (editing !== null) {
     return (
-      <ScreenContainer>
+      <ScreenContainer safeTop={false}>
         <ScreenHeader eyebrow="MANAGE" title={editing === 'new' ? 'New stylist' : 'Edit stylist'} left={<BackButton onPress={() => setEditing(null)} />} />
 
         <Card style={{ gap: Spacing.xs }}>
@@ -117,7 +117,7 @@ export default function Stylists() {
 
   // List mode
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="MANAGE" title="Stylists" left={<BackButton />} />
 
       <ThemedButton
@@ -138,7 +138,7 @@ export default function Stylists() {
                 <View style={{ flex: 1 }}>
                   <Text style={[Type.label, { color: c.fg, fontSize: 16 }]}>{stylist.name}</Text>
                   {!!stylist.role && (
-                    <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>{stylist.role}</Text>
+                    <Text style={[Type.caption, { color: c.fgMuted, marginTop: Spacing.xs / 2 }]}>{stylist.role}</Text>
                   )}
                   {!stylist.is_active && (
                     <View
@@ -148,7 +148,7 @@ export default function Stylists() {
                         borderColor: c.hairline,
                         borderRadius: Radius.pill,
                         paddingHorizontal: Spacing.sm,
-                        paddingVertical: 2,
+                        paddingVertical: Spacing.xs / 2,
                         marginTop: Spacing.xs,
                       }}
                     >

@@ -79,6 +79,7 @@ export default function BookingFlow() {
           }
         })
         .catch(() => {
+          setSlots([]);
           setError('Could not load times — go back and retry.');
           setLoadingSlots(false);
         });
@@ -128,7 +129,7 @@ export default function BookingFlow() {
   }
 
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader
         eyebrow="BOOK YOUR VISIT"
         title={STEP_TITLES[state.step] ?? 'Booking'}
@@ -137,7 +138,7 @@ export default function BookingFlow() {
       />
       <StepIndicator total={4} current={STEPS.indexOf(state.step)} />
 
-      <Animated.View key={state.step} entering={FadeIn.duration(220)} exiting={FadeOut.duration(120)}>
+      <Animated.View key={state.step} entering={FadeIn.duration(220)} exiting={FadeOut.duration(120)} style={{ width: '100%', maxWidth: 440, alignSelf: 'center' }}>
         {state.step === 'stylist' && (<>
           <Pressable
             onPress={() => dispatch({ type: 'setStylist', stylistId: null })}

@@ -22,7 +22,7 @@ export default function WalkIn() {
   if (loading) return <LoadingScreen message="Loading services..." />;
 
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="WALK-IN" title="New booking" subtitle="Pick a service to start" left={<BackButton />} />
       {services.map((service) => (
         <ServiceCard

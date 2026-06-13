@@ -8,11 +8,11 @@ export function GoogleButton({ onPress, busy }: { onPress: () => void; busy?: bo
   const isIOS = Platform.OS === 'ios';
 
   const bg = isIOS
-    ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.7)')
+    ? (scheme === 'dark' ? 'rgba(30, 28, 25, 0.80)' : 'rgba(255, 255, 255, 0.7)')
     : (scheme === 'dark' ? '#1E1C19' : '#FFFFFF');
 
   const border = isIOS
-    ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)')
+    ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(0, 0, 0, 0.08)')
     : (scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : '#E6E4DF');
 
   const fg = c.fg;

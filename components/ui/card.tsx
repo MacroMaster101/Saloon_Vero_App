@@ -61,8 +61,8 @@ export function Card({ children, style }: { children: ReactNode; style?: ViewSty
           outerStyles, 
           { 
             borderWidth: style?.borderWidth ?? 1,
-            borderColor: style?.borderColor ?? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(28, 26, 23, 0.08)'),
-            backgroundColor: style?.backgroundColor ?? (scheme === 'dark' ? 'rgba(24, 22, 20, 0.72)' : 'rgba(255, 255, 255, 0.70)'),
+            borderColor: style?.borderColor ?? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(28, 26, 23, 0.08)'),
+            backgroundColor: style?.backgroundColor ?? (scheme === 'dark' ? 'rgba(30, 28, 25, 0.80)' : 'rgba(255, 255, 255, 0.70)'),
             overflow: 'hidden',
           },
           Shadow.sm

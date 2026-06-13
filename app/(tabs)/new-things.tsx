@@ -39,7 +39,7 @@ export default function NewThings() {
   if (loading) return <LoadingScreen message="Finding the latest..." />;
 
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="FRESH" title="New Things" />
 
       <SectionHeader number={1} eyebrow="Today" title="Featured offers" />
@@ -79,7 +79,7 @@ export default function NewThings() {
                   <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold' }]}>{item.title}</Text>
                   <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>{item.category}</Text>
                 </View>
-                <View style={{ borderRadius: Radius.pill, backgroundColor: c.accentTint, paddingHorizontal: 10, paddingVertical: 2 }}>
+                <View style={{ borderRadius: Radius.pill, backgroundColor: c.accentTint, paddingHorizontal: Spacing.sm, paddingVertical: 2 }}>
                   <Text style={[Type.caption, { color: c.accentText, fontFamily: 'Poppins_600SemiBold', fontSize: 11 }]}>{item.tag}</Text>
                 </View>
               </View>

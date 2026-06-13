@@ -19,8 +19,8 @@ export function ThemedButton({ label, onPress, variant = 'primary', busy = false
   if (variant === 'primary') {
     bg = c.ctaBg;
     fg = c.ctaFg;
-    border = isIOS
-      ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.25)')
+    border = (isIOS && scheme !== 'dark')
+      ? 'rgba(255, 255, 255, 0.25)'
       : c.ctaBg;
   } else if (variant === 'secondary') {
     // Ghost look: transparent background with c.line border
@@ -35,8 +35,8 @@ export function ThemedButton({ label, onPress, variant = 'primary', busy = false
   } else {
     // social variant
     if (isIOS) {
-      bg = scheme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.7)';
-      border = scheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
+      bg = scheme === 'dark' ? 'rgba(30, 28, 25, 0.80)' : 'rgba(255, 255, 255, 0.7)';
+      border = scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(0, 0, 0, 0.08)';
     } else {
       bg = scheme === 'dark' ? '#1E1C19' : '#FFFFFF';
       border = scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : '#E6E4DF';

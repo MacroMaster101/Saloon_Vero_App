@@ -11,8 +11,13 @@ type SessionState = {
   session: Session | null;
   loading: boolean;
   isGuest: boolean;
+  // True between a PASSWORD_RECOVERY event and the password actually being reset.
+  // A recovery session is a real session, so without this flag the app would route
+  // the user straight in — skipping the "set a new password" step.
+  recovering: boolean;
   profile: SessionProfile | null;
   profileReady: boolean;
+  beginRecovery: () => void;
   continueAsGuest: () => Promise<void>;
   clearGuestMode: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -23,8 +28,10 @@ const Ctx = createContext<SessionState>({
   session: null,
   loading: true,
   isGuest: false,
+  recovering: false,
   profile: null,
   profileReady: true,
+  beginRecovery: () => {},
   continueAsGuest: async () => {},
   clearGuestMode: async () => {},
   signOut: async () => {},
@@ -33,6 +40,7 @@ const Ctx = createContext<SessionState>({
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [recovering, setRecovering] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<SessionProfile | null>(null);
   const [profileChecked, setProfileChecked] = useState(false);
@@ -47,8 +55,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setIsGuest(!data.session && guest === 'true');
       setLoading(false);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_e, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event, s) => {
       setSession(s);
+      // A recovery code/link creates a session, but the user must set a new
+      // password before entering the app. The OTP path fires SIGNED_IN (not
+      // PASSWORD_RECOVERY), so the reset screen sets the flag via beginRecovery()
+      // *before* verifying — we must NOT clear it on SIGNED_IN here, or we'd undo
+      // it instantly. Only a real sign-out (incl. after the password is updated)
+      // clears recovery; PASSWORD_RECOVERY (link path) also sets it.
+      if (event === 'PASSWORD_RECOVERY') setRecovering(true);
+      else if (event === 'SIGNED_OUT') setRecovering(false);
       if (s) {
         await AsyncStorage.removeItem(GUEST_MODE_KEY);
         setIsGuest(false);
@@ -95,8 +111,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   };
   const signOut = async () => {
     await supabase.auth.signOut();
+    setRecovering(false);
     await clearGuestMode();
   };
+  // Called by the reset screen right after verifying the recovery code, so the
+  // app holds the user on the new-password step instead of routing them in.
+  const beginRecovery = () => setRecovering(true);
 
   return (
     <Ctx.Provider value={{
@@ -104,8 +124,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       session,
       loading,
       isGuest,
+      recovering,
       profile,
       profileReady: profileChecked,
+      beginRecovery,
       continueAsGuest,
       clearGuestMode,
       signOut,

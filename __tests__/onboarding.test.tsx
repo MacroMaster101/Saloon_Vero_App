@@ -21,6 +21,16 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(() => Promise.resolve()),
 }));
 
+jest.mock('react-native-safe-area-context', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    SafeAreaProvider: ({ children }: any) => children,
+    SafeAreaView: ({ children, style, ...props }: any) => <View style={style} {...props}>{children}</View>,
+    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  };
+});
+
 describe('EntryScreen / Splash & Onboarding Flow', () => {
   beforeEach(() => {
     jest.clearAllMocks();

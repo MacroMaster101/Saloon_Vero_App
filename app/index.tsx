@@ -11,13 +11,15 @@ import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withRep
 import { BlurView } from 'expo-blur';
 import { Card } from '@/components/ui/card';
 import { ScreenContainer } from '@/components/ui/screen';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SPLASH_DELAY_MS = process.env.NODE_ENV === 'test' ? 0 : 3000;
 
 export default function EntryScreen() {
-  const { user, loading: sessionLoading, isGuest, profile, profileReady } = useSession();
+  const { user, loading: sessionLoading, isGuest, profile, profileReady, recovering } = useSession();
   const { c, scheme, Spacing, Type, Radius } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const featureItemStyle = {
     backgroundColor: c.surfaceRaised,
@@ -85,6 +87,13 @@ export default function EntryScreen() {
     // Once both welcome check, session check, profile check, and minimum timer are loaded
     if (isFirstTime === null || sessionLoading || !profileReady || !delayFinished) return;
 
+    // Mid password-recovery: the user has a session but must set a new password
+    // first. Keep them on the reset screen rather than routing into the app.
+    if (recovering) {
+      router.replace('/auth/reset-password' as never);
+      return;
+    }
+
     if (!isFirstTime) {
       if (isGuest) {
         // Guests always land on the booking tab
@@ -98,7 +107,7 @@ export default function EntryScreen() {
         }
       }
     }
-  }, [isFirstTime, sessionLoading, profileReady, delayFinished, user, profile, isGuest]);
+  }, [isFirstTime, sessionLoading, profileReady, delayFinished, user, profile, isGuest, recovering]);
 
   // Actions
   const handleGetStarted = async () => {
@@ -136,7 +145,9 @@ export default function EntryScreen() {
         <View
           style={[
             StyleSheet.absoluteFillObject,
-            Platform.OS === 'ios' ? { backgroundColor: c.glassBg } : { backgroundColor: c.bg, opacity: 0.92 },
+            Platform.OS === 'ios'
+              ? { backgroundColor: scheme === 'dark' ? 'rgba(18, 17, 16, 0.88)' : c.glassBg }
+              : { backgroundColor: c.bg, opacity: 0.92 },
           ]}
         />
         
@@ -159,7 +170,7 @@ export default function EntryScreen() {
           <Animated.Text entering={FadeIn.delay(300)} style={[Type.h1, { color: c.fg, marginTop: Spacing.xl, textAlign: 'center', letterSpacing: 0.5 }]}>
             Saloon Vero
           </Animated.Text>
-          <Animated.Text entering={FadeIn.delay(500)} style={[Type.caption, { color: c.accentText, letterSpacing: 3, textTransform: 'uppercase', textAlign: 'center', marginTop: 8, marginBottom: Spacing.xl * 1.5, fontFamily: 'Poppins_600SemiBold' }]}>
+          <Animated.Text entering={FadeIn.delay(500)} style={[Type.caption, { color: c.accentText, letterSpacing: 3, textTransform: 'uppercase', textAlign: 'center', marginTop: Spacing.sm, marginBottom: Spacing.xl * 1.5, fontFamily: 'Poppins_600SemiBold' }]}>
             Redefine Your Look
           </Animated.Text>
 
@@ -168,7 +179,7 @@ export default function EntryScreen() {
             <View style={[styles.progressBarBg, { backgroundColor: c.line }]}>
               <View style={[styles.progressBarFill, { backgroundColor: c.accent, width: `${progress}%` }]} />
             </View>
-            <Text style={[Type.caption, { color: c.fg2, fontFamily: 'Poppins_600SemiBold', textAlign: 'center', marginTop: 8 }]}>
+            <Text style={[Type.caption, { color: c.fg2, fontFamily: 'Poppins_600SemiBold', textAlign: 'center', marginTop: Spacing.sm }]}>
               {progress}%
             </Text>
           </View>
@@ -179,9 +190,9 @@ export default function EntryScreen() {
 
   // Render Onboarding Welcome Screen
   return (
-    <ScreenContainer scroll={false} style={{ padding: 0 }}>
+    <ScreenContainer scroll={false} style={{ padding: 0 }} safeTop={false}>
       {/* Floating ThemeToggleButton */}
-      <View style={{ position: 'absolute', top: Spacing.sm, right: Spacing.md, zIndex: 10 }}>
+      <View style={{ position: 'absolute', top: insets.top + Spacing.sm, right: Spacing.md, zIndex: 10 }}>
         <ThemeToggleButton />
       </View>
 
@@ -193,8 +204,8 @@ export default function EntryScreen() {
           resizeMode="cover"
         />
         {/* Subtle overlay blur — iOS only (no real blur on Android; the crisp image looks better
-            than expo-blur's flat tint there). */}
-        {Platform.OS === 'ios' && (
+            than expo-blur's flat tint there; disabled in dark mode to match Android's crisp style) */}
+        {Platform.OS === 'ios' && scheme !== 'dark' && (
           <BlurView
             intensity={15}
             tint="dark"
@@ -205,7 +216,7 @@ export default function EntryScreen() {
       </View>
 
       {/* Bottom Content wrapped in premium glassy layout */}
-      <View style={[styles.contentContainer, { padding: Spacing.md, marginTop: -20 }]}>
+      <View style={[styles.contentContainer, { padding: Spacing.md, marginTop: -20, width: '100%', maxWidth: 520, alignSelf: 'center' }]}>
         <Card style={{ flex: 1, justifyContent: 'space-between', gap: Spacing.sm }}>
           <View>
             <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 1.5, textTransform: 'uppercase' }]}>

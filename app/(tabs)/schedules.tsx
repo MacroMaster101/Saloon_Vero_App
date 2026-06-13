@@ -142,13 +142,14 @@ export default function Schedules() {
 
   return (
     <ScreenContainer
+      safeTop={false}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.accent} />}>
       <ScreenHeader eyebrow="SCHEDULES" title="Your bookings" right={<ThemeToggleButton />} />
       {isGuest && <GuestHeader />}
 
       {bookings.length === 0 ? (
         <Card style={{ alignItems: 'center', gap: Spacing.md, marginTop: Spacing.lg, padding: Spacing.lg }}>
-          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 64, height: 64, borderRadius: Radius.pill, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: c.accentText, fontSize: 28 }}>+</Text>
           </View>
           <Text style={[Type.h2, { color: c.fg, textAlign: 'center' }]}>No bookings yet</Text>
