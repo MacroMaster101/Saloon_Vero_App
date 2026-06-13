@@ -58,3 +58,8 @@ app-example
 
 # brainstorm mockups
 .superpowers/
+
+# supabase CLI local state
+supabase/.temp/
+supabase/.branches/
+/supabase

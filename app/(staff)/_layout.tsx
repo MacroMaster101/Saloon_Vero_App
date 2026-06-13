@@ -32,9 +32,13 @@ export default function StaffLayout() {
         right: 16,
         height: 64,
         borderRadius: 32,
-        backgroundColor: isIOS ? c.glassBg : c.surfaceRaised,
+        backgroundColor: isIOS
+          ? (scheme === 'dark' ? 'rgba(30, 28, 25, 0.78)' : c.glassBg)
+          : c.surfaceRaised,
         borderWidth: 1,
-        borderColor: isIOS ? c.glassBorder : c.hairline,
+        borderColor: isIOS
+          ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : c.glassBorder)
+          : c.hairline,
         ...Shadow.sm,
         overflow: 'hidden',
         borderTopWidth: 0,

@@ -24,6 +24,7 @@ export default function Success() {
 
   return (
     <ScreenContainer scroll={false} style={{ justifyContent: 'center' }}>
+      <View style={{ width: '100%', maxWidth: 440, alignSelf: 'center' }}>
       <View style={{ alignItems: 'center' }}>
         {/* Gold check glyph in accentTint pill circle */}
         <View style={{
@@ -54,7 +55,7 @@ export default function Success() {
               borderRadius: Radius.pill,
               paddingHorizontal: Spacing.md,
               paddingVertical: Spacing.xs,
-              marginTop: 4,
+              marginTop: Spacing.xs,
             }}>
               <Text style={[Type.h2, { color: c.accentText }]}>{reference}</Text>
             </View>
@@ -63,14 +64,14 @@ export default function Success() {
         </View>
 
         {/* Ticket-like dashed divider */}
-        <View style={{ height: 1, borderStyle: 'dashed', borderWidth: 1, borderColor: c.line, marginVertical: 4 }} />
+        <View style={{ height: 1, borderStyle: 'dashed', borderWidth: 1, borderColor: c.line, marginVertical: Spacing.xs }} />
 
         <View style={{ gap: Spacing.xs }}>
           <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold' }]}>{service ?? 'Salon service'}</Text>
           <Text style={[Type.caption, { color: c.fgMuted, fontSize: 13 }]}>Stylist: {stylist}</Text>
           <Text style={[Type.caption, { color: c.fgMuted, fontSize: 13 }]}>When: {when}</Text>
           {!Number.isNaN(priceLkr) && (
-            <Text style={[Type.caption, { color: c.accentText, fontSize: 13, fontFamily: 'Poppins_600SemiBold', marginTop: 2 }]}>
+            <Text style={[Type.caption, { color: c.accentText, fontSize: 13, fontFamily: 'Poppins_600SemiBold', marginTop: Spacing.xs / 2 }]}>
               Price: {money(priceLkr)}
             </Text>
           )}
@@ -88,6 +89,7 @@ export default function Success() {
           <ThemedButton variant="secondary" label="New walk-in" onPress={() => router.replace('/(admin)/walk-in' as never)} />
         )}
         {isGuest && <ThemedButton variant="secondary" label="Login / Create Account" onPress={() => router.push('/access' as never)} />}
+      </View>
       </View>
     </ScreenContainer>
   );

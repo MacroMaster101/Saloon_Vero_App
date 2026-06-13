@@ -74,7 +74,7 @@ export default function Home() {
   const upcoming = bookings.find((booking) => booking.status === 'confirmed' && new Date(booking.starts_at).getTime() >= Date.now());
 
   return (
-    <ScreenContainer refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.accent} />}>
+    <ScreenContainer safeTop={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.accent} />}>
       <ScreenHeader eyebrow="WELCOME BACK" title={`Hi, ${firstName}`} subtitle="Cuts, colour and care — booked in seconds." />
 
       <LinearGradient
@@ -89,8 +89,8 @@ export default function Home() {
         }}
       >
         <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'Poppins_600SemiBold' }]}>Saloon Vero</Text>
-        <Text style={[Type.h2, { color: c.fg, marginTop: 4, letterSpacing: 0.2 }]}>Redefine Your Look</Text>
-        <Text style={[Type.body, { color: c.fg2, marginTop: 4, fontSize: 14 }]}>Premium styling, real-time appointments, and stylists ready for your next visit.</Text>
+        <Text style={[Type.h2, { color: c.fg, marginTop: Spacing.xs, letterSpacing: 0.2 }]}>Redefine Your Look</Text>
+        <Text style={[Type.body, { color: c.fg2, marginTop: Spacing.xs, fontSize: 14 }]}>Premium styling, real-time appointments, and stylists ready for your next visit.</Text>
         <Pressable
           onPress={() => router.push('/(tabs)/book')}
           style={{

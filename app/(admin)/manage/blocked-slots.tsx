@@ -180,7 +180,7 @@ export default function BlockedSlots() {
   if (loading) return <LoadingScreen message="Loading blocked slots..." />;
 
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="MANAGE" title="Blocked slots" left={<BackButton />} />
 
       <ThemedButton
@@ -287,12 +287,12 @@ export default function BlockedSlots() {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <View style={{ flex: 1 }}>
                     <Text style={[Type.label, { color: c.fg, fontSize: 15 }]}>{label}</Text>
-                    <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>
+                    <Text style={[Type.caption, { color: c.fgMuted, marginTop: Spacing.xs / 2 }]}>
                       {slotDateFmt.format(start)}{' '}
                       {slotTimeFmt.format(start)} – {slotTimeFmt.format(end)}
                     </Text>
                     {!!slot.reason && (
-                      <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>{slot.reason}</Text>
+                      <Text style={[Type.caption, { color: c.fgMuted, marginTop: Spacing.xs / 2 }]}>{slot.reason}</Text>
                     )}
                   </View>
                   <Pressable

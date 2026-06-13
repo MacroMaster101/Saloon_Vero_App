@@ -100,6 +100,7 @@ export default function AdminToday() {
 
   return (
     <ScreenContainer
+      safeTop={false}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -158,10 +159,10 @@ export default function AdminToday() {
           <Text style={[Type.caption, { color: c.fgMuted }]}>
             {timeFmt.format(new Date(nextBooking.starts_at))} – {timeFmt.format(new Date(nextBooking.ends_at))}
           </Text>
-          <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold', marginTop: 4 }]}>
+          <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold', marginTop: Spacing.xs }]}>
             {nextBooking.customer_name}
           </Text>
-          <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>
+          <Text style={[Type.caption, { color: c.fgMuted, marginTop: Spacing.xs / 2 }]}>
             {serviceLabel(services, nextBooking.service_id)}
           </Text>
         </Card>

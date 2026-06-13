@@ -27,7 +27,7 @@ export default function AdminAccount() {
   }
 
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="ADMIN" title={firstName} />
 
       {/* Identity card */}
@@ -35,10 +35,10 @@ export default function AdminAccount() {
         <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold' }]}>
           {(user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? '—'}
         </Text>
-        <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>
+        <Text style={[Type.caption, { color: c.fgMuted, marginTop: Spacing.xs / 2 }]}>
           {user?.email ?? '—'}
         </Text>
-        <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>
+        <Text style={[Type.caption, { color: c.fgMuted, marginTop: Spacing.xs / 2 }]}>
           Salon administrator
         </Text>
       </Card>

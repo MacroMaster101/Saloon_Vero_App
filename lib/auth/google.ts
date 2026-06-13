@@ -28,6 +28,12 @@ export function buildRedirectUri(): string {
   );
 }
 
+// Password recovery links reuse the same callback route; auth/callback inspects
+// the `type` param to route recovery sessions to the set-new-password screen.
+export function buildPasswordResetRedirectUri(): string {
+  return buildRedirectUri();
+}
+
 export type GoogleResult = { ok: true } | { ok: false; message: string };
 
 export function withMobileRedirect(authUrl: string, redirectTo: string): string {

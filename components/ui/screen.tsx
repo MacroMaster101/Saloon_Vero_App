@@ -3,7 +3,19 @@ import { ScrollView, View, StyleSheet, ViewStyle, RefreshControl, Platform } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/use-theme';
 
-export function ScreenContainer({ children, scroll = true, style, refreshControl }: { children: ReactNode; scroll?: boolean; style?: ViewStyle; refreshControl?: React.ReactElement<React.ComponentProps<typeof RefreshControl>> }) {
+export function ScreenContainer({
+  children,
+  scroll = true,
+  style,
+  refreshControl,
+  safeTop = true,
+}: {
+  children: ReactNode;
+  scroll?: boolean;
+  style?: ViewStyle;
+  refreshControl?: React.ReactElement<React.ComponentProps<typeof RefreshControl>>;
+  safeTop?: boolean;
+}) {
   const { c, Spacing, scheme } = useTheme();
   
   // Custom glowing blobs tailored for light & dark themes
@@ -19,12 +31,12 @@ export function ScreenContainer({ children, scroll = true, style, refreshControl
         blob3: 'rgba(168, 122, 46, 0.03)',
       };
 
-  const isIOS = Platform.OS === 'ios';
+  const showBlobs = Platform.OS === 'ios' && scheme !== 'dark';
 
   return (
     <View style={[styles.wrapper, { backgroundColor: c.bg }]}>
-      {/* Background ambient glowing spheres - iOS Only */}
-      {isIOS && (
+      {/* Background ambient glowing spheres - iOS Only (disabled in dark mode) */}
+      {showBlobs && (
         <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
           <View style={[styles.blob, { width: 320, height: 320, borderRadius: 160, backgroundColor: blobColors.blob1, top: -90, right: -80 }]} />
           <View style={[styles.blob, { width: 280, height: 280, borderRadius: 140, backgroundColor: blobColors.blob2, bottom: 60, left: -70 }]} />
@@ -32,10 +44,15 @@ export function ScreenContainer({ children, scroll = true, style, refreshControl
         </View>
       )}
 
-      <SafeAreaView style={styles.safe} edges={['top']}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: c.bg }]} edges={safeTop ? ['top'] : []}>
         {scroll ? (
           <ScrollView
-            contentContainerStyle={[styles.scrollContent, { padding: Spacing.md }, style]}
+            style={{ backgroundColor: c.bg }}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingHorizontal: Spacing.md, paddingBottom: Spacing.md, paddingTop: safeTop ? Spacing.md : 0 },
+              style,
+            ]}
             refreshControl={refreshControl}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
@@ -43,7 +60,7 @@ export function ScreenContainer({ children, scroll = true, style, refreshControl
             {children}
           </ScrollView>
         ) : (
-          <View style={[styles.flex, { padding: Spacing.md }, style]}>{children}</View>
+          <View style={[styles.flex, { backgroundColor: c.bg, paddingHorizontal: Spacing.md, paddingBottom: Spacing.md, paddingTop: safeTop ? Spacing.md : 0 }, style]}>{children}</View>
         )}
       </SafeAreaView>
     </View>

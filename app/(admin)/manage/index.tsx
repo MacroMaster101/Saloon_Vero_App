@@ -24,7 +24,7 @@ export default function ManageIndex() {
   const { c, Spacing, Type } = useTheme();
 
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="MANAGE" title="Salon settings" />
 
       <View style={{ gap: Spacing.sm, marginTop: Spacing.sm }}>
@@ -46,7 +46,7 @@ export default function ManageIndex() {
                 </Text>
                 <View style={{ flex: 1 }}>
                   <Text style={[Type.label, { color: c.fg, fontSize: 16 }]}>{item.title}</Text>
-                  <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>{item.caption}</Text>
+                  <Text style={[Type.caption, { color: c.fgMuted, marginTop: Spacing.xs / 2 }]}>{item.caption}</Text>
                 </View>
                 <Text style={[Type.h2, { color: c.fgMuted }]}>›</Text>
               </View>

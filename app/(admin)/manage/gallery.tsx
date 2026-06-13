@@ -122,7 +122,7 @@ export default function Gallery() {
   if (loading) return <LoadingScreen message="Loading gallery..." />;
 
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="MANAGE" title="Gallery" left={<BackButton />} />
 
       {!pendingUri && (

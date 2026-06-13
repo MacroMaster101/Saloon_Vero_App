@@ -47,7 +47,7 @@ export default function Book() {
   }
 
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="SERVICES" title="Book a visit" right={<ThemeToggleButton />} />
       {isGuest && <GuestHeader />}
       <SectionHeader number={1} eyebrow="Appointments" title="Book a service" />
@@ -88,7 +88,7 @@ export default function Book() {
         })}
       </View>
       {visibleServices.length === 0 ? (
-        <Text style={[Type.body, { color: c.fgMuted }]}>No services match your search.</Text>
+        <Text style={[Type.body, { color: c.fgMuted, textAlign: 'center', paddingVertical: Spacing.lg }]}>No services match your search.</Text>
       ) : visibleServices.map((s, i) => (
         <Animated.View key={s.id} entering={FadeInDown.delay(i * 60).duration(380)}>
           <ServiceCard service={s} onPress={() => router.push(`/booking/${s.id}`)} />

@@ -97,6 +97,7 @@ export default function AdminSchedule() {
 
   return (
     <ScreenContainer
+      safeTop={false}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}

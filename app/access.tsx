@@ -14,15 +14,18 @@ import { useTheme } from '@/hooks/use-theme';
 
 export default function AccessScreen() {
   const { c, Radius, Spacing, Type, Shadow } = useTheme();
-  const { user, loading, continueAsGuest, profile, profileReady, isGuest } = useSession();
+  const { user, loading, continueAsGuest, profile, profileReady, isGuest, recovering } = useSession();
   const [error, setError] = useState<string | null>(null);
   const [guestBusy, setGuestBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
 
   useEffect(() => {
+    // Don't auto-route a password-recovery session into the app — the user must
+    // finish setting a new password on the reset screen first.
+    if (recovering) return;
     if (!loading && profileReady && user)
       router.replace((routeForSession(user, profile, isGuest) ?? '/(tabs)') as never);
-  }, [loading, profileReady, user, profile, isGuest]);
+  }, [loading, profileReady, user, profile, isGuest, recovering]);
 
   async function guest() {
     setGuestBusy(true);
@@ -50,6 +53,7 @@ export default function AccessScreen() {
         <ThemeToggleButton />
       </View>
 
+      <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
       <View style={{ alignItems: 'center', marginBottom: Spacing.xl }}>
         <View
           style={[{
@@ -68,7 +72,7 @@ export default function AccessScreen() {
         <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 2, marginTop: Spacing.md, textTransform: 'uppercase', fontFamily: 'Poppins_600SemiBold' }]}>
           Welcome to
         </Text>
-        <Text style={[Type.h1, { color: c.fg, textAlign: 'center', marginTop: 4, letterSpacing: 0.5 }]}>Saloon Vero</Text>
+        <Text style={[Type.h1, { color: c.fg, textAlign: 'center', marginTop: Spacing.xs, letterSpacing: 0.5 }]}>Saloon Vero</Text>
         <Text style={[Type.body, { color: c.fg2, textAlign: 'center', marginTop: Spacing.xs, paddingHorizontal: Spacing.md, fontSize: 14 }]}>
           Book premium styling sessions as a guest, or register to sync your records.
         </Text>
@@ -96,6 +100,7 @@ export default function AccessScreen() {
         
         {error && <Text style={[Type.caption, { color: c.error, textAlign: 'center', marginTop: Spacing.xs }]}>{error}</Text>}
       </Card>
+      </View>
     </ScreenContainer>
   );
 }

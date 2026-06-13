@@ -85,7 +85,7 @@ export default function Services() {
   // Edit mode
   if (editing !== null) {
     return (
-      <ScreenContainer>
+      <ScreenContainer safeTop={false}>
         <ScreenHeader eyebrow="MANAGE" title={editing === 'new' ? 'New service' : 'Edit service'} left={<BackButton onPress={() => setEditing(null)} />} />
 
         <Card style={{ gap: Spacing.xs }}>
@@ -163,7 +163,7 @@ export default function Services() {
 
   // List mode
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="MANAGE" title="Services" left={<BackButton />} />
 
       <ThemedButton
@@ -183,7 +183,7 @@ export default function Services() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View style={{ flex: 1 }}>
                   <Text style={[Type.label, { color: c.fg, fontSize: 16 }]}>{service.name}</Text>
-                  <Text style={[Type.caption, { color: c.accentDark, marginTop: 2 }]}>
+                  <Text style={[Type.caption, { color: c.accentDark, marginTop: Spacing.xs / 2 }]}>
                     {money(service.price_lkr)}
                     <Text style={{ color: c.fgMuted }}>{` · ${service.duration_min} min`}</Text>
                   </Text>
@@ -195,7 +195,7 @@ export default function Services() {
                           borderColor: c.hairline,
                           borderRadius: Radius.pill,
                           paddingHorizontal: Spacing.sm,
-                          paddingVertical: 2,
+                          paddingVertical: Spacing.xs / 2,
                         }}
                       >
                         <Text style={[Type.caption, { color: c.fgMuted }]}>inactive</Text>
@@ -208,7 +208,7 @@ export default function Services() {
                           borderColor: c.hairline,
                           borderRadius: Radius.pill,
                           paddingHorizontal: Spacing.sm,
-                          paddingVertical: 2,
+                          paddingVertical: Spacing.xs / 2,
                         }}
                       >
                         <Text style={[Type.caption, { color: c.fgMuted }]}>not bookable</Text>

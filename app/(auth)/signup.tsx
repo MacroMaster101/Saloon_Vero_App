@@ -3,6 +3,7 @@ import { BackHandler, View, Text } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/api/supabase';
 import { validateSignup } from '@/lib/auth/signup-validation';
+import { friendlyAuthError } from '@/lib/auth/friendly-error';
 import { signInWithGoogle } from '@/lib/auth/google';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
@@ -11,8 +12,13 @@ import { ThemedTextInput } from '@/components/ui/text-input';
 import { ThemedButton } from '@/components/ui/button';
 import { ThemeToggleButton } from '@/components/ui/theme-toggle-button';
 import { GoogleButton } from '@/components/ui/google-button';
+import { OtpInput } from '@/components/ui/otp-input';
 import { BackButton } from '@/components/ui/back-button';
 import { useTheme } from '@/hooks/use-theme';
+import { useCountdown } from '@/hooks/use-countdown';
+
+// Matches the SMTP "Minimum interval per user" so resend can't trip the rate limit.
+const RESEND_COOLDOWN_SECONDS = 60;
 
 export default function Signup() {
   const { c, Type, Spacing } = useTheme();
@@ -25,6 +31,12 @@ export default function Signup() {
   const [busy, setBusy] = useState(false);
   const [gbusy, setGbusy] = useState(false);
   const [confirmSentTo, setConfirmSentTo] = useState<string | null>(null);
+  // OTP verification state (shown once a code has been emailed).
+  const [otp, setOtp] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const cooldown = useCountdown();
 
   // After signup, Android hardware back would pop to the filled form — send
   // the user to log in instead, matching the card's CTA.
@@ -48,14 +60,50 @@ export default function Signup() {
       options: { data: { full_name: v.cleanName, phone: v.cleanPhone } },
     });
     setBusy(false);
-    if (error) return setError(error.message);
+    if (error) return setError(friendlyAuthError(error.message));
     // Supabase returns a "fake success" with no identities when the email is already registered.
     if (data.user && data.user.identities?.length === 0) {
       return setError('An account with this email already exists — log in instead.');
     }
-    // Email confirmation enabled: no session yet, the user must tap the link first.
-    if (!data.session) return setConfirmSentTo(v.cleanEmail);
+    // Email confirmation enabled: no session yet. Supabase emailed a 6-digit code;
+    // collect it and verify in-app (no link/deep-link, no website redirect).
+    if (!data.session) {
+      cooldown.start(RESEND_COOLDOWN_SECONDS);
+      return setConfirmSentTo(v.cleanEmail);
+    }
     router.replace('/(tabs)');
+  }
+
+  async function verify() {
+    if (!confirmSentTo) return;
+    setError(null);
+    setNotice(null);
+    const code = otp.trim();
+    if (code.length < 6) return setError('Enter the code from your email.');
+    setVerifying(true);
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: confirmSentTo,
+      token: code,
+      type: 'signup',
+    });
+    setVerifying(false);
+    if (error) return setError(friendlyAuthError(error.message));
+    // A verified signup returns a session — drop straight into the app.
+    if (data.session) return router.replace('/(tabs)');
+    // No session (rare) — fall back to the login screen.
+    router.replace('/(auth)/login');
+  }
+
+  async function resend() {
+    if (!confirmSentTo || cooldown.active) return;
+    setError(null);
+    setNotice(null);
+    setResending(true);
+    const { error } = await supabase.auth.resend({ type: 'signup', email: confirmSentTo });
+    setResending(false);
+    if (error) return setError(friendlyAuthError(error.message));
+    cooldown.start(RESEND_COOLDOWN_SECONDS);
+    setNotice('A new code is on its way.');
   }
 
   async function google() {
@@ -69,26 +117,46 @@ export default function Signup() {
 
   if (confirmSentTo) {
     return (
-      <ScreenContainer>
+      <ScreenContainer safeTop={false}>
         <ScreenHeader eyebrow="SALOON VERO" title="Confirm your email" right={<ThemeToggleButton />} />
+        <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
         <Card style={{ padding: Spacing.lg, gap: Spacing.sm, marginTop: Spacing.md }}>
           <Text style={{ fontSize: 40, textAlign: 'center' }}>📬</Text>
-          <Text style={[Type.h2, { color: c.fg, textAlign: 'center' }]}>Almost there</Text>
+          <Text style={[Type.h2, { color: c.fg, textAlign: 'center' }]}>Enter your code</Text>
           <Text style={[Type.body, { color: c.fg2, textAlign: 'center' }]}>
-            We sent a confirmation link to{'\n'}
+            We sent a verification code to{'\n'}
             <Text style={{ fontFamily: 'Poppins_600SemiBold', color: c.accentText }}>{confirmSentTo}</Text>
           </Text>
-          <Text style={[Type.caption, { color: c.fgMuted, textAlign: 'center', marginBottom: Spacing.sm }]}>
-            Tap the link in that email, then come back and log in.
+          <View style={{ marginTop: Spacing.sm, marginBottom: Spacing.sm }}>
+            <OtpInput
+              value={otp}
+              onChangeText={(t) => { setOtp(t); setError(null); setNotice(null); }}
+              onComplete={verify}
+            />
+          </View>
+          {error && <Text style={[Type.caption, { color: c.error, textAlign: 'center' }]}>{error}</Text>}
+          {notice && <Text style={[Type.caption, { color: c.accentText, textAlign: 'center' }]}>{notice}</Text>}
+          <ThemedButton label="Verify & continue" busy={verifying} onPress={verify} />
+          <Text
+            onPress={resending || cooldown.active ? undefined : resend}
+            style={[Type.caption, { color: cooldown.active ? c.fgMuted : c.accentText, textAlign: 'center', marginTop: Spacing.xs, fontFamily: 'Poppins_600SemiBold' }]}
+          >
+            {resending ? 'Sending…' : cooldown.active ? `Resend code in ${cooldown.seconds}s` : "Didn't get it? Resend code"}
           </Text>
-          <ThemedButton label="Go to log in" onPress={() => router.replace('/(auth)/login')} />
+          <Text
+            onPress={() => router.replace('/(auth)/login')}
+            style={[Type.caption, { color: c.fgMuted, textAlign: 'center', marginTop: Spacing.xs }]}
+          >
+            Back to log in
+          </Text>
         </Card>
+        </View>
       </ScreenContainer>
     );
   }
 
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader
         eyebrow="SALOON VERO"
         title="Create account"
@@ -96,6 +164,7 @@ export default function Signup() {
         right={<ThemeToggleButton />}
       />
 
+      <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
       <Card style={{ padding: Spacing.lg }}>
 
         <ThemedTextInput
@@ -153,6 +222,7 @@ export default function Signup() {
           Already have an account? Log in
         </Text>
       </Card>
+      </View>
     </ScreenContainer>
   );
 }

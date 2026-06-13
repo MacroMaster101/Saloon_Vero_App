@@ -11,13 +11,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function TabLayout() {
   const { c, scheme, Shadow } = useTheme();
   const insets = useSafeAreaInsets();
-  const { user, isGuest, loading, profile, profileReady } = useSession();
+  const { user, isGuest, loading, profile, profileReady, recovering } = useSession();
   const showLoggedTabs = !!user;
   const showGuestTabs = !user && isGuest;
 
   useEffect(() => {
     if (!loading && !user && !isGuest) router.replace('/access' as never);
-  }, [loading, user, isGuest]);
+    // A recovery session must finish setting a new password before using the app.
+    else if (recovering) router.replace('/auth/reset-password' as never);
+  }, [loading, user, isGuest, recovering]);
 
   // Wait for the profile before rendering: without this, staff/admin logging in
   // see the customer tab bar flash before their workspace redirect fires.
@@ -46,11 +48,11 @@ export default function TabLayout() {
         height: 64,
         borderRadius: 32,
         backgroundColor: isIOS
-          ? c.glassBg
+          ? (scheme === 'dark' ? 'rgba(30, 28, 25, 0.78)' : c.glassBg)
           : c.surfaceRaised,
         borderWidth: 1,
         borderColor: isIOS
-          ? c.glassBorder
+          ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : c.glassBorder)
           : c.hairline,
         ...Shadow.sm,
         overflow: 'hidden',

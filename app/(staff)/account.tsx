@@ -40,7 +40,7 @@ export default function StaffAccount() {
   }
 
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="STAFF" title={firstName} />
 
       {/* Identity card */}

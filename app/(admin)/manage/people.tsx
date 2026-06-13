@@ -102,7 +102,7 @@ function RolePill({ role }: { role: Profile['role'] }) {
           backgroundColor: c.accentTint,
           borderRadius: Radius.pill,
           paddingHorizontal: Spacing.sm,
-          paddingVertical: 2,
+          paddingVertical: Spacing.xs / 2,
         }}
       >
         <Text style={[Type.caption, { color: c.accentText }]}>{role}</Text>
@@ -118,7 +118,7 @@ function RolePill({ role }: { role: Profile['role'] }) {
           borderColor: c.hairline,
           borderRadius: Radius.pill,
           paddingHorizontal: Spacing.sm,
-          paddingVertical: 2,
+          paddingVertical: Spacing.xs / 2,
         }}
       >
         <Text style={[Type.caption, { color: c.fg2 }]}>{role}</Text>
@@ -167,7 +167,7 @@ export default function People() {
   if (loading) return <LoadingScreen message="Loading people..." />;
 
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="MANAGE" title="People" left={<BackButton />} />
 
       {!!error && (
@@ -188,7 +188,7 @@ export default function People() {
                       {person.full_name ?? person.email ?? 'Unnamed'}
                     </Text>
                     {!!person.email && (
-                      <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>{person.email}</Text>
+                      <Text style={[Type.caption, { color: c.fgMuted, marginTop: Spacing.xs / 2 }]}>{person.email}</Text>
                     )}
                   </View>
                   <RolePill role={person.role} />

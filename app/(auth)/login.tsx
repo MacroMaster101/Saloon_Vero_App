@@ -42,7 +42,7 @@ export default function Login() {
   }
 
   return (
-    <ScreenContainer>
+    <ScreenContainer safeTop={false}>
       <ScreenHeader
         eyebrow="SALOON VERO"
         title="Welcome back"
@@ -51,6 +51,7 @@ export default function Login() {
         right={<ThemeToggleButton />}
       />
 
+      <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
       <Card style={{ padding: Spacing.lg }}>
 
         <ThemedTextInput
@@ -95,6 +96,7 @@ export default function Login() {
           New here? Create an account
         </Text>
       </Card>
+      </View>
     </ScreenContainer>
   );
 }

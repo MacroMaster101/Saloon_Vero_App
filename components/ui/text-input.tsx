@@ -17,7 +17,7 @@ export function ThemedTextInput({
   const isIOS = Platform.OS === 'ios';
 
   const bg = isIOS
-    ? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.65)')
+    ? (scheme === 'dark' ? 'rgba(26, 24, 22, 0.80)' : 'rgba(255, 255, 255, 0.65)')
     : c.bg2;
 
   const border = error

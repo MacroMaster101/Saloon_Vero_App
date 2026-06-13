@@ -25,7 +25,13 @@ export default function AuthCallback() {
       if (!mounted) return;
 
       if (result.ok) {
-        router.replace('/(tabs)');
+        // A password-recovery link establishes a session too, but the user must
+        // set a new password before entering the app — route them there instead.
+        if (/[?&#]type=recovery(?:&|$|#)/.test(url)) {
+          router.replace('/auth/reset-password');
+        } else {
+          router.replace('/(tabs)');
+        }
       } else {
         setError(result.message);
       }
