@@ -1,7 +1,11 @@
 import { useCallback, useState } from 'react';
-import { Alert, Switch, Text, View } from 'react-native';
+import { Alert, Switch, Text, View, ScrollView, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tabBarBottomGap } from '@/constants/theme';
 import { useFocusEffect } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
+import { getStylistAvatar } from '@/components/stylists/stylist-card';
+import { AdminPhotoPicker } from '@/components/admin/admin-photo-picker';
 import { BackButton } from '@/components/ui/back-button';
 import { AdminSectionLabel } from '@/components/admin/admin-ui';
 import { getStylistsAdmin, upsertStylist, deleteStylist } from '@/lib/api/admin';
@@ -19,6 +23,11 @@ import type { Stylist } from '@/types/database';
 
 export default function Stylists() {
   const { c, Spacing, Type, Radius } = useTheme();
+  const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === 'ios';
+  const fabBottom = isIOS
+    ? 24 + 64 + 12
+    : 16 + insets.bottom + 64 + 12;
 
   const [stylists, setStylists] = useState<Stylist[]>([]);
   const [editing, setEditing] = useState<Stylist | 'new' | null>(null);
@@ -33,6 +42,7 @@ export default function Stylists() {
   // Form fields
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [tagsText, setTagsText] = useState('');
   const [isActive, setIsActive] = useState(true);
 
@@ -46,11 +56,13 @@ export default function Stylists() {
 
   const resetForm = () => {
     setName(''); setRole(''); setTagsText(''); setIsActive(true); setError(null);
+    setAvatarUrl('');
   };
 
   const seedForm = (s: Stylist) => {
     setName(s.name); setRole(s.role); setTagsText(s.tags.join(', '));
     setIsActive(s.is_active); setError(null);
+    setAvatarUrl(s.avatar_url || '');
   };
 
   const handleSave = async () => {
@@ -65,6 +77,7 @@ export default function Stylists() {
       role,
       tags,
       is_active: isActive,
+      avatar_url: avatarUrl.trim() || null,
     };
 
     setSaving(true);
@@ -120,6 +133,15 @@ export default function Stylists() {
 
         <Card style={{ gap: Spacing.sm }}>
           <AdminSectionLabel>Stylist Details</AdminSectionLabel>
+          
+          <AdminPhotoPicker
+            photoUrl={avatarUrl && (avatarUrl.startsWith('http') || avatarUrl.startsWith('data:image')) ? avatarUrl : null}
+            onChangePhotoUrl={(url) => setAvatarUrl(url || '')}
+            placeholderUrl={getStylistAvatar(editing !== 'new' ? (editing as Stylist).slug : slugify(name), name)}
+            bucketName="avatars"
+            uploadPath={`stylists/${slugify(name || 'new-stylist')}`}
+          />
+
           <ThemedTextInput label="Name" value={name} onChangeText={setName} />
           <ThemedTextInput label="Role / Title" value={role} onChangeText={setRole} placeholder="e.g. Master Barber, Senior Stylist" />
           <ThemedTextInput
@@ -184,15 +206,8 @@ export default function Stylists() {
   );
 
   return (
-    <ScreenContainer safeTop={false}>
+    <ScreenContainer safeTop={false} scroll={false}>
       <ScreenHeader eyebrow="MANAGE" title="Stylists" left={<BackButton />} />
-
-      <ThemedButton
-        label="New Stylist"
-        icon="plus.circle.fill"
-        onPress={() => { resetForm(); setEditing('new'); }}
-        style={{ marginBottom: Spacing.md }}
-      />
 
       <ThemedTextInput
         placeholder="Search stylists"
@@ -202,7 +217,12 @@ export default function Stylists() {
         style={{ marginBottom: Spacing.md }}
       />
 
-      <View style={{ gap: Spacing.sm }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: fabBottom + 56 + Spacing.md }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={{ gap: Spacing.sm }}>
           {loading ? (
             <SkeletonCard count={3} />
           ) : filteredStylists.length === 0 ? (
@@ -210,7 +230,6 @@ export default function Stylists() {
               No stylists found.
             </Text>
           ) : filteredStylists.map((stylist) => {
-            const initials = stylist.name.charAt(0).toUpperCase();
             return (
               <PressableScale
                 key={stylist.id}
@@ -220,14 +239,12 @@ export default function Stylists() {
                 <Card style={{ padding: 0, overflow: 'hidden', borderLeftWidth: 4, borderLeftColor: stylist.is_active ? c.accent : c.fgMuted }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.md }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md, flex: 1 }}>
-                      <LinearGradient
-                        colors={stylist.is_active ? [c.accent, c.accentDark] : ['#8A857C', '#57534C']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}
-                      >
-                        <Text style={{ fontSize: 16, fontFamily: 'Poppins_700Bold', color: '#FFFFFF' }}>{initials}</Text>
-                      </LinearGradient>
+                      <Image
+                        source={{ uri: getStylistAvatar(stylist.slug, stylist.name, stylist.avatar_url) }}
+                        style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.bg2 }}
+                        contentFit="cover"
+                        transition={200}
+                      />
 
                       <View style={{ flex: 1, gap: 2 }}>
                         <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold' }]}>{stylist.name}</Text>
@@ -280,6 +297,32 @@ export default function Stylists() {
             );
           })}
         </View>
+      </ScrollView>
+
+      {/* Floating Action Button */}
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel="New Stylist"
+        onPress={() => { resetForm(); setEditing('new'); }}
+        style={{
+          position: 'absolute',
+          right: Spacing.md,
+          bottom: fabBottom,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          backgroundColor: c.accent,
+          justifyContent: 'center',
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOpacity: 0.25,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 6,
+        }}
+      >
+        <IconSymbol name="plus" size={24} color="#FFF" />
+      </PressableScale>
     </ScreenContainer>
   );
 }

@@ -37,19 +37,26 @@ A premium **React Native + Expo SDK 54 + TypeScript** customer-facing mobile app
 
 ## 🚀 Key Features
 
-*   **🔐 Secure Authentication:**
+*   **🔐 Secure Authentication & Auto-Migration:**
     *   📧 Email and Password signup/login (Supabase Auth).
     *   🌐 **"Continue with Google"** OAuth integration via `expo-auth-session` and `expo-web-browser`, returning to the app through the `saloonveroapp://auth/callback` deep link.
-    *   🕶️ **Guest mode:** browse services and book without an account — guest bookings are kept locally in AsyncStorage and surfaced in the Schedules tab.
+    *   🕶️ **Guest mode:** Browse services and book without an account. Bookings are kept locally in `AsyncStorage` and automatically claimed and merged into the user's account upon sign-up or login.
 *   **🎨 Aesthetics & Theming ("Warm Luxe"):**
     *   🌗 Curated light and dark brand modes driven automatically by the device's system settings.
     *   ✍️ Refined **Poppins** typography (weights from `400Regular` to `800ExtraBold`).
     *   ✨ Fluid animations and interactive press-feedbacks (0.97x button/card spring-scaling via a shared `PressableScale` primitive), staggered list entrances, skeleton loaders, and centered safe-area-aware layouts — all powered by `react-native-reanimated`.
 *   **📅 Booking Wizard:**
-    *   🚶‍♂️ Stepped flow: Service Selection $\rightarrow$ Stylist Choice (or *"Any Stylist"*) $\rightarrow$ Date $\rightarrow$ Real-Time Available Time Slots $\rightarrow$ Contact Details $\rightarrow$ Success (generates a unique `VS-XXXXX` reference code).
-*   **👤 User Dashboard:**
+    *   🚶‍♂️ Stepped flow: Service Selection $\rightarrow$ Stylist Choice (or *"Any Stylist"*) $\rightarrow$ Date selection in a gorgeous 3-column square card grid (complete with `TODAY`/`TOMORROW` badges and custom amber branding for Poson Poya day) $\rightarrow$ Real-Time Available Time Slots $\rightarrow$ Contact Details $\rightarrow$ Success.
+*   **👤 Schedules, Cancel & Reschedule (For All Users):**
+    *   📋 **Schedules tab** displaying upcoming and past bookings styled as receipt-style records, with vertical left color status strips (gold for upcoming, green for completed, red for cancelled), ticket badges for reference codes, and flexible action rows.
+    *   🔄 **Reschedule upcoming bookings**: Select a new date and time directly from the schedules list (available to both logged-in users and guests).
+    *   ❌ **Cancel upcoming bookings**: Cancel bookings with simple confirmation prompts. Authenticated users verify via JWT, while guests verify via phone number ownership checks.
+*   **🛠️ Admin Customization Dashboard:**
+    *   🖼️ Manage services, stylists, lookbook gallery items, and blocked slots directly in-app.
+    *   📷 **Custom Photo URL Uploads**: Admins can enter custom headshot links for stylists or custom image links for services in the edit forms, dynamically updating visual assets across customer lists in real-time.
+    *   ➕ **Bottom Floating Action Buttons (FABs)**: Quick actions float cleanly above list views, automatically accounting for safe-area layout heights on iOS and Android.
+*   **👤 User Profile Dashboard:**
     *   🖼️ Profile manager: edit name, phone number, and upload custom avatars directly to Supabase Storage (falls back to email-derived DiceBear avatars if un-configured).
-    *   📋 **Schedules tab** displaying upcoming and past bookings with clear status pills (e.g., *Confirmed*, *Completed*, *Cancelled*).
     *   ✨ **New Things tab** highlighting fresh services and salon updates.
 
 ---

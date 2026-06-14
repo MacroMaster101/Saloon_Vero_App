@@ -16,7 +16,7 @@ export function ServiceCard({
   onPress?: () => void;
 }) {
   const { c, Radius, Shadow, Spacing, Type } = useTheme();
-  const imageUrl = getServiceImage(service.slug, service.category);
+  const imageUrl = getServiceImage(service.slug, service.category, service.icon);
 
   if (layout === 'grid') {
     return (

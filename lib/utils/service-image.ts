@@ -27,7 +27,16 @@ const CATEGORY_FALLBACKS: Record<string, string> = {
  * Resolves a beautiful image URL for a given service based on its slug.
  * Falls back to category-level default image if the slug is not recognized.
  */
-export function getServiceImage(slug: string | null | undefined, category?: string | null): string {
+export function getServiceImage(
+  slug: string | null | undefined,
+  category?: string | null,
+  customUrl?: string | null,
+): string {
+  const cleanUrl = (customUrl ?? '').trim();
+  if (cleanUrl && (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:image'))) {
+    return cleanUrl;
+  }
+
   const cleanSlug = (slug ?? '').trim().toLowerCase();
   if (cleanSlug && SERVICE_IMAGES[cleanSlug]) {
     return SERVICE_IMAGES[cleanSlug];

@@ -1,6 +1,11 @@
 import { useCallback, useState } from 'react';
-import { Alert, Switch, Text, View } from 'react-native';
+import { Alert, Switch, Text, View, ScrollView, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tabBarBottomGap } from '@/constants/theme';
 import { useFocusEffect } from 'expo-router';
+import { Image } from 'expo-image';
+import { getServiceImage } from '@/lib/utils/service-image';
+import { AdminPhotoPicker } from '@/components/admin/admin-photo-picker';
 import { BackButton } from '@/components/ui/back-button';
 import { AdminChip, AdminSectionLabel } from '@/components/admin/admin-ui';
 import { getServicesAdmin, upsertService, deleteService } from '@/lib/api/admin';
@@ -20,6 +25,11 @@ import type { Service } from '@/types/database';
 
 export default function Services() {
   const { c, Spacing, Type, Radius } = useTheme();
+  const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === 'ios';
+  const fabBottom = isIOS
+    ? 24 + 64 + 12
+    : 16 + insets.bottom + 64 + 12;
 
   const [services, setServices] = useState<Service[]>([]);
   const [editing, setEditing] = useState<Service | 'new' | null>(null);
@@ -35,6 +45,7 @@ export default function Services() {
   // Form fields
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [icon, setIcon] = useState('');
   const [price, setPrice] = useState('');
   const [duration, setDuration] = useState('');
   const [category, setCategory] = useState<'hair' | 'beauty'>('hair');
@@ -52,12 +63,14 @@ export default function Services() {
   const resetForm = () => {
     setName(''); setDescription(''); setPrice(''); setDuration('');
     setCategory('hair'); setBookable(true); setIsActive(true); setError(null);
+    setIcon('');
   };
 
   const seedForm = (s: Service) => {
     setName(s.name); setDescription(s.description); setPrice(String(s.price_lkr));
     setDuration(String(s.duration_min)); setCategory(s.category);
     setBookable(s.bookable); setIsActive(s.is_active); setError(null);
+    setIcon(s.icon || '');
   };
 
   const handleSave = async () => {
@@ -78,6 +91,7 @@ export default function Services() {
       duration_min: parsedDuration,
       bookable,
       is_active: isActive,
+      icon: icon.trim() || 'scissors',
     };
 
     setSaving(true);
@@ -133,6 +147,15 @@ export default function Services() {
 
         <Card style={{ gap: Spacing.sm }}>
           <AdminSectionLabel>Service Details</AdminSectionLabel>
+          
+          <AdminPhotoPicker
+            photoUrl={icon && (icon.startsWith('http') || icon.startsWith('data:image')) ? icon : null}
+            onChangePhotoUrl={(url) => setIcon(url || '')}
+            placeholderUrl={getServiceImage(editing !== 'new' ? (editing as Service).slug : slugify(name), category)}
+            bucketName="gallery"
+            uploadPath={`services/${slugify(name || 'new-service')}`}
+          />
+
           <ThemedTextInput label="Name" value={name} onChangeText={setName} />
           <ThemedTextInput label="Description" value={description} onChangeText={setDescription} />
           <ThemedTextInput
@@ -235,15 +258,8 @@ export default function Services() {
   });
 
   return (
-    <ScreenContainer safeTop={false}>
+    <ScreenContainer safeTop={false} scroll={false}>
       <ScreenHeader eyebrow="MANAGE" title="Services" left={<BackButton />} />
-
-      <ThemedButton
-        label="New Service"
-        icon="plus.circle.fill"
-        onPress={() => { resetForm(); setEditing('new'); }}
-        style={{ marginBottom: Spacing.md }}
-      />
 
       <ThemedTextInput
         placeholder="Search services"
@@ -270,7 +286,12 @@ export default function Services() {
         })}
       </View>
 
-      <View style={{ gap: Spacing.sm }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: fabBottom + 56 + Spacing.md }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={{ gap: Spacing.sm }}>
           {loading ? (
             <SkeletonCard count={3} />
           ) : filteredServices.length === 0 ? (
@@ -291,7 +312,13 @@ export default function Services() {
                 onPress={() => { seedForm(service); setEditing(service); }}
               >
                 <Card style={{ padding: 0, overflow: 'hidden', borderLeftWidth: 4, borderLeftColor: borderCol }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.md }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.md, gap: Spacing.md }}>
+                    <Image
+                      source={{ uri: getServiceImage(service.slug, service.category, service.icon) }}
+                      style={{ width: 56, height: 56, borderRadius: Radius.md, backgroundColor: c.bg2 }}
+                      contentFit="cover"
+                      transition={200}
+                    />
                     <View style={{ flex: 1, gap: 4 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
                         <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold', flex: 1 }]} numberOfLines={1}>{service.name}</Text>
@@ -357,6 +384,32 @@ export default function Services() {
             );
           })}
         </View>
+      </ScrollView>
+
+      {/* Floating Action Button */}
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel="New Service"
+        onPress={() => { resetForm(); setEditing('new'); }}
+        style={{
+          position: 'absolute',
+          right: Spacing.md,
+          bottom: fabBottom,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          backgroundColor: c.accent,
+          justifyContent: 'center',
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOpacity: 0.25,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 6,
+        }}
+      >
+        <IconSymbol name="plus" size={24} color="#FFF" />
+      </PressableScale>
     </ScreenContainer>
   );
 }

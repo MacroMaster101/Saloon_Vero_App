@@ -65,7 +65,7 @@ export async function getBusinessHours() {
 }
 export async function getMyBookings(userId: string) {
   const { data } = await supabase.from('bookings')
-    .select('reference,starts_at,status,service_id,stylist_id')
+    .select('id,reference,starts_at,status,service_id,stylist_id')
     .eq('user_id', userId).order('starts_at', { ascending: false });
   return data ?? [];
 }
