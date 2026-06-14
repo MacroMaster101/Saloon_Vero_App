@@ -1,13 +1,14 @@
 import { useCallback, useState } from 'react';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Switch, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { BackButton } from '@/components/ui/back-button';
 import { getStylistsAdmin, upsertStylist } from '@/lib/api/admin';
 import { slugify } from '@/lib/admin/helpers';
 import { Card } from '@/components/ui/card';
-import { LoadingScreen } from '@/components/ui/loading';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { ThemedButton } from '@/components/ui/button';
 import { ThemedTextInput } from '@/components/ui/text-input';
 import { useTheme } from '@/hooks/use-theme';
@@ -67,12 +68,10 @@ export default function Stylists() {
     setEditing(null);
   };
 
-  if (loading) return <LoadingScreen message="Loading stylists..." />;
-
   // Edit mode
   if (editing !== null) {
     return (
-      <ScreenContainer safeTop={false}>
+      <ScreenContainer safeTop={false} keyboardAware>
         <ScreenHeader eyebrow="MANAGE" title={editing === 'new' ? 'New stylist' : 'Edit stylist'} left={<BackButton onPress={() => setEditing(null)} />} />
 
         <Card style={{ gap: Spacing.xs }}>
@@ -127,8 +126,10 @@ export default function Stylists() {
       />
 
       <View style={{ gap: Spacing.sm }}>
-        {stylists.map((stylist) => (
-          <Pressable
+        {loading ? (
+          <SkeletonCard count={3} />
+        ) : stylists.map((stylist) => (
+          <PressableScale
             key={stylist.id}
             accessibilityRole="button"
             onPress={() => { seedForm(stylist); setEditing(stylist); }}
@@ -159,7 +160,7 @@ export default function Stylists() {
                 <Text style={[Type.h2, { color: c.fgMuted }]}>›</Text>
               </View>
             </Card>
-          </Pressable>
+          </PressableScale>
         ))}
       </View>
     </ScreenContainer>

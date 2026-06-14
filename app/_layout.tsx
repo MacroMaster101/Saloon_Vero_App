@@ -24,7 +24,7 @@ function RootNavigator() {
 
   return (
     <ThemeProvider value={nav}>
-      <Stack screenOptions={{ contentStyle: { backgroundColor: nav.colors.background } }}>
+      <Stack screenOptions={{ contentStyle: { backgroundColor: nav.colors.background }, animation: 'slide_from_right' }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="access" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

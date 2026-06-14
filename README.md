@@ -44,7 +44,7 @@ A premium **React Native + Expo SDK 54 + TypeScript** customer-facing mobile app
 *   **🎨 Aesthetics & Theming ("Warm Luxe"):**
     *   🌗 Curated light and dark brand modes driven automatically by the device's system settings.
     *   ✍️ Refined **Poppins** typography (weights from `400Regular` to `800ExtraBold`).
-    *   ✨ Fluid animations and interactive press-feedbacks (0.97x button/card scaling) powered by `react-native-reanimated`.
+    *   ✨ Fluid animations and interactive press-feedbacks (0.97x button/card spring-scaling via a shared `PressableScale` primitive), staggered list entrances, skeleton loaders, and centered safe-area-aware layouts — all powered by `react-native-reanimated`.
 *   **📅 Booking Wizard:**
     *   🚶‍♂️ Stepped flow: Service Selection $\rightarrow$ Stylist Choice (or *"Any Stylist"*) $\rightarrow$ Date $\rightarrow$ Real-Time Available Time Slots $\rightarrow$ Contact Details $\rightarrow$ Success (generates a unique `VS-XXXXX` reference code).
 *   **👤 User Dashboard:**
@@ -112,7 +112,7 @@ Saloon_Vero_App/
   types/                       # 🧾 Shared TypeScript/domain types
     database.ts                # 🗄️ Supabase database type definitions
 
-  __tests__/                   # 🧪 Jest unit and component test suites
+  __tests__/                   # 🧪 Jest unit and component test suites (local-only, git-ignored)
 
   .env.example                 # 🔑 Safe placeholder env file for setup
   app.json                     # 📱 Expo app configuration (scheme: saloonveroapp)
@@ -167,7 +167,9 @@ In the Supabase dashboard under **Authentication → URL Configuration**, add th
 
 ## 🧪 Testing
 
-The codebase includes an automated test suite containing **34 tests across 12 suites**, covering state transitions, availability logic, Google OAuth redirect handling, environment validation, onboarding behavior, and custom components.
+The codebase includes an automated test suite containing **116 tests across 35 suites**, covering state transitions, availability logic, Google OAuth redirect handling, environment validation, onboarding behavior, and custom UI components (buttons, cards, loaders, skeletons, empty states, and entrance/press animations).
+
+> ℹ️ The `__tests__/` folder is **git-ignored and kept local-only** — it is not uploaded to GitHub. The tests still run on your machine for local verification.
 
 To run the tests:
 ```bash
@@ -185,7 +187,7 @@ npx tsc --noEmit
 
 ## 🧼 GitHub Upload Notes
 
-This project is ready to upload with source files, tests, configuration, and safe placeholders committed.
+This project is ready to upload with source files, configuration, and safe placeholders committed. The Jest test suite is kept local-only (git-ignored) and is not uploaded.
 
 Ignored local-only files include:
 
@@ -200,6 +202,7 @@ node_modules/
 AGENTS.md
 CLAUDE.md
 docs/
+__tests__/
 expo-env.d.ts
 dist/
 web-build/

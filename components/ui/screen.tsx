@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
-import { ScrollView, View, StyleSheet, ViewStyle, RefreshControl, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, View, StyleSheet, ViewStyle, RefreshControl, Platform, KeyboardAvoidingView } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/use-theme';
+import { Layout, tabBarBottomGap } from '@/constants/theme';
 
 export function ScreenContainer({
   children,
@@ -9,33 +10,49 @@ export function ScreenContainer({
   style,
   refreshControl,
   safeTop = true,
+  keyboardAware = false,
 }: {
   children: ReactNode;
   scroll?: boolean;
   style?: ViewStyle;
   refreshControl?: React.ReactElement<React.ComponentProps<typeof RefreshControl>>;
   safeTop?: boolean;
+  keyboardAware?: boolean;
 }) {
   const { c, Spacing, scheme } = useTheme();
-  
-  // Custom glowing blobs tailored for light & dark themes
-  const blobColors = scheme === 'dark' 
-    ? {
-        blob1: 'rgba(217, 166, 72, 0.04)',
-        blob2: 'rgba(217, 166, 72, 0.03)',
-        blob3: 'rgba(217, 166, 72, 0.02)',
-      }
-    : {
-        blob1: 'rgba(168, 122, 46, 0.05)',
-        blob2: 'rgba(168, 122, 46, 0.04)',
-        blob3: 'rgba(168, 122, 46, 0.03)',
-      };
+  const insets = useSafeAreaInsets();
 
+  const blobColors = scheme === 'dark'
+    ? { blob1: 'rgba(217, 166, 72, 0.04)', blob2: 'rgba(217, 166, 72, 0.03)', blob3: 'rgba(217, 166, 72, 0.02)' }
+    : { blob1: 'rgba(168, 122, 46, 0.05)', blob2: 'rgba(168, 122, 46, 0.04)', blob3: 'rgba(168, 122, 46, 0.03)' };
   const showBlobs = Platform.OS === 'ios' && scheme !== 'dark';
+
+  const column = { width: '100%' as const, maxWidth: Layout.maxContentWidth, alignSelf: 'center' as const };
+  const dockGap = tabBarBottomGap(insets.bottom);
+
+  const inner = scroll ? (
+    <ScrollView
+      style={{ backgroundColor: c.bg }}
+      contentContainerStyle={[
+        styles.scrollContent,
+        { paddingHorizontal: Spacing.md, paddingBottom: dockGap, paddingTop: safeTop ? Spacing.md : 0 },
+        column,
+        style,
+      ]}
+      refreshControl={refreshControl}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+    >
+      {children}
+    </ScrollView>
+  ) : (
+    <View style={[styles.flex, column, { backgroundColor: c.bg, paddingHorizontal: Spacing.md, paddingBottom: Spacing.md, paddingTop: safeTop ? Spacing.md : 0 }, style]}>
+      {children}
+    </View>
+  );
 
   return (
     <View style={[styles.wrapper, { backgroundColor: c.bg }]}>
-      {/* Background ambient glowing spheres - iOS Only (disabled in dark mode) */}
       {showBlobs && (
         <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
           <View style={[styles.blob, { width: 320, height: 320, borderRadius: 160, backgroundColor: blobColors.blob1, top: -90, right: -80 }]} />
@@ -43,47 +60,21 @@ export function ScreenContainer({
           <View style={[styles.blob, { width: 200, height: 200, borderRadius: 100, backgroundColor: blobColors.blob3, top: '45%', right: -60 }]} />
         </View>
       )}
-
       <SafeAreaView style={[styles.safe, { backgroundColor: c.bg }]} edges={safeTop ? ['top'] : []}>
-        {scroll ? (
-          <ScrollView
-            style={{ backgroundColor: c.bg }}
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingHorizontal: Spacing.md, paddingBottom: Spacing.md, paddingTop: safeTop ? Spacing.md : 0 },
-              style,
-            ]}
-            refreshControl={refreshControl}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {children}
-          </ScrollView>
-        ) : (
-          <View style={[styles.flex, { backgroundColor: c.bg, paddingHorizontal: Spacing.md, paddingBottom: Spacing.md, paddingTop: safeTop ? Spacing.md : 0 }, style]}>{children}</View>
-        )}
+        {keyboardAware ? (
+          <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            {inner}
+          </KeyboardAvoidingView>
+        ) : inner}
       </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  safe: {
-    flex: 1,
-  },
-  flex: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 100, // accommodate the floating glassy tab bar dock
-  },
-  blob: {
-    position: 'absolute',
-    opacity: 0.95,
-  },
+  wrapper: { flex: 1, overflow: 'hidden' },
+  safe: { flex: 1 },
+  flex: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
+  blob: { position: 'absolute', opacity: 0.95 },
 });

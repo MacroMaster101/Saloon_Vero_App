@@ -20,7 +20,7 @@ export function ScreenHeader({ eyebrow, title, subtitle, left, right }: {
         marginHorizontal: -Spacing.md, // bleed past ScreenContainer padding
         paddingHorizontal: Spacing.md, 
         paddingTop: insets.top + Spacing.sm, 
-        paddingBottom: Spacing.md,
+        paddingBottom: Spacing.lg,
         borderBottomWidth: 1, borderBottomColor: c.hairline, marginBottom: Spacing.sm,
       }}
     >
@@ -31,7 +31,7 @@ export function ScreenHeader({ eyebrow, title, subtitle, left, right }: {
             <Text style={[Type.eyebrow, { color: c.accentDark, textTransform: 'uppercase' }]}>{eyebrow}</Text>
           )}
           <Text style={[Type.display, { color: c.fg }]}>{title}</Text>
-          {!!subtitle && <Text style={[Type.body, { color: c.fg2, marginTop: 2 }]}>{subtitle}</Text>}
+          {!!subtitle && <Text style={[Type.body, { color: c.fg2, marginTop: Spacing.xs }]}>{subtitle}</Text>}
         </View>
         {right && <View style={{ alignSelf: 'center' }}>{right}</View>}
       </View>

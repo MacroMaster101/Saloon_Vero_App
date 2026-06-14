@@ -6,6 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { LoadingScreen } from '@/components/ui/loading';
 import { useSession } from '@/context/session';
 import { useTheme } from '@/hooks/use-theme';
+import { Layout } from '@/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
@@ -45,7 +46,7 @@ export default function TabLayout() {
         bottom: isIOS ? 24 : 16 + insets.bottom,
         left: 16,
         right: 16,
-        height: 64,
+        height: Layout.tabBarHeight,
         borderRadius: 32,
         backgroundColor: isIOS
           ? (scheme === 'dark' ? 'rgba(30, 28, 25, 0.78)' : c.glassBg)

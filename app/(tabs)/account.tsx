@@ -16,6 +16,7 @@ import { SectionHeader } from '@/components/ui/section-header';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { StatusTag } from '@/components/ui/status-tag';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemePreference } from '@/context/theme';
 import { LoadingScreen } from '@/components/ui/loading';
@@ -62,7 +63,7 @@ export default function Account() {
   if (!user) return null;
   const src = avatarSrc(user.user_metadata as any, user.email ?? name);
   return (
-    <ScreenContainer safeTop={false}>
+    <ScreenContainer safeTop={false} keyboardAware>
       <ScreenHeader eyebrow="YOUR SPACE" title="Account" />
 
       <View style={{ alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.lg, marginTop: Spacing.md }}>
@@ -104,7 +105,7 @@ export default function Account() {
 
       <SectionHeader number={3} eyebrow="History" title="My bookings" />
       {bookings.length === 0 ? (
-        <Text style={[Type.body, { color: c.fgMuted, textAlign: 'center', paddingVertical: Spacing.md }]}>No bookings yet.</Text>
+        <EmptyState title="No bookings yet" />
       ) : bookings.map((b) => (
         <Card key={b.reference} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm }}>
           <View>

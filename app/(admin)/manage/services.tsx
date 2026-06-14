@@ -1,15 +1,16 @@
 import { useCallback, useState } from 'react';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Switch, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { BackButton } from '@/components/ui/back-button';
 import { getServicesAdmin, upsertService } from '@/lib/api/admin';
 import { slugify } from '@/lib/admin/helpers';
 import { money } from '@/lib/utils/format';
 import { Card } from '@/components/ui/card';
-import { LoadingScreen } from '@/components/ui/loading';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SegmentedControl } from '@/components/ui/segmented-control';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { ThemedButton } from '@/components/ui/button';
 import { ThemedTextInput } from '@/components/ui/text-input';
 import { useTheme } from '@/hooks/use-theme';
@@ -80,12 +81,10 @@ export default function Services() {
     setEditing(null);
   };
 
-  if (loading) return <LoadingScreen message="Loading services..." />;
-
   // Edit mode
   if (editing !== null) {
     return (
-      <ScreenContainer safeTop={false}>
+      <ScreenContainer safeTop={false} keyboardAware>
         <ScreenHeader eyebrow="MANAGE" title={editing === 'new' ? 'New service' : 'Edit service'} left={<BackButton onPress={() => setEditing(null)} />} />
 
         <Card style={{ gap: Spacing.xs }}>
@@ -173,8 +172,10 @@ export default function Services() {
       />
 
       <View style={{ gap: Spacing.sm }}>
-        {services.map((service) => (
-          <Pressable
+        {loading ? (
+          <SkeletonCard count={3} />
+        ) : services.map((service) => (
+          <PressableScale
             key={service.id}
             accessibilityRole="button"
             onPress={() => { seedForm(service); setEditing(service); }}
@@ -219,7 +220,7 @@ export default function Services() {
                 <Text style={[Type.h2, { color: c.fgMuted }]}>›</Text>
               </View>
             </Card>
-          </Pressable>
+          </PressableScale>
         ))}
       </View>
     </ScreenContainer>

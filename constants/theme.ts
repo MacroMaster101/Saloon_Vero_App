@@ -25,6 +25,13 @@ export const Colors = {
 
 export const Spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 } as const;
 export const Radius = { sm: 8, md: 12, lg: 16, xl: 20, pill: 999 } as const;
+export const Layout = { maxContentWidth: 480, tabBarHeight: 64, touchMin: 44 } as const;
+
+export function tabBarBottomGap(insetBottom: number) {
+  // floating dock height + gap below it + safe-area inset
+  return Layout.tabBarHeight + (Platform.OS === 'ios' ? 24 : 16) + insetBottom;
+}
+
 export const Shadow = {
   sm: { shadowColor: '#1C1A17', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   md: { shadowColor: '#1C1A17', shadowOpacity: 0.10, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 5 },
@@ -35,6 +42,7 @@ export const Type = {
   h1: { fontFamily: 'Poppins_800ExtraBold', fontSize: 28 },
   h2: { fontFamily: 'Poppins_700Bold', fontSize: 20 },
   body: { fontFamily: 'Poppins_400Regular', fontSize: 15 },
+  bodyLg: { fontFamily: 'Poppins_400Regular', fontSize: 16, lineHeight: 22 },
   label: { fontFamily: 'Poppins_600SemiBold', fontSize: 13 },
   caption: { fontFamily: 'Poppins_400Regular', fontSize: 12 },
   button: { fontFamily: 'Poppins_700Bold', fontSize: 16 },

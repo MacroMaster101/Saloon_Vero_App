@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View, Text, RefreshControl } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { getMyBookings, getServices, getStylists } from '@/lib/api/queries';
@@ -10,6 +9,8 @@ import { Card } from '@/components/ui/card';
 import { ScreenContainer } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
 import { ScreenHeader } from '@/components/ui/screen-header';
+import { FadeUp } from '@/components/ui/fade-up';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
 import { useSession } from '@/context/session';
 import { LoadingScreen } from '@/components/ui/loading';
@@ -68,8 +69,6 @@ export default function Home() {
     return <LoadingScreen message="Loading Saloon Vero..." />;
   }
 
-  const entering = (i: number) => (hasAnimated.current ? undefined : FadeInDown.delay(i * 60).duration(380));
-
   const firstName = ((user.user_metadata?.full_name as string | undefined) ?? user.email ?? 'there').split(' ')[0];
   const upcoming = bookings.find((booking) => booking.status === 'confirmed' && new Date(booking.starts_at).getTime() >= Date.now());
 
@@ -107,7 +106,7 @@ export default function Home() {
       </LinearGradient>
 
       <SectionHeader number={1} eyebrow="Next up" title="Upcoming booking" />
-      <Card style={{ marginBottom: Spacing.sm, borderColor: upcoming ? c.accent : c.hairline }}>
+      <Card accent={!!upcoming} style={{ marginBottom: Spacing.sm }}>
         {upcoming ? (
           <View style={{ gap: Spacing.xs }}>
             <Text style={[Type.label, { color: c.fg, fontSize: 16 }]}>{upcoming.reference}</Text>
@@ -129,8 +128,8 @@ export default function Home() {
           ['View Schedules', '/(tabs)/schedules', '📅'],
           ['New Things', '/(tabs)/new-things', '✨'],
         ] as const).map(([label, href, icon], index) => (
-          <Animated.View key={label} entering={entering(index)} style={{ width: '48%' }}>
-            <Pressable
+          <FadeUp key={label} index={index} animate={!hasAnimated.current} style={{ width: '48%' }}>
+            <PressableScale
               onPress={() => router.push(href as never)}
               style={{
                 borderRadius: Radius.md,
@@ -144,22 +143,22 @@ export default function Home() {
               }}>
               <Text style={{ fontSize: 18 }}>{icon}</Text>
               <Text style={[Type.label, { color: c.fg, flex: 1, fontSize: 13, fontFamily: 'Poppins_600SemiBold' }]}>{label}</Text>
-            </Pressable>
-          </Animated.View>
+            </PressableScale>
+          </FadeUp>
         ))}
       </View>
 
       <SectionHeader number={3} eyebrow="Services" title="What we offer" />
       {services.map((s, i) => (
-        <Animated.View key={s.id} entering={entering(i)}>
+        <FadeUp key={s.id} index={i} animate={!hasAnimated.current}>
           <ServiceCard service={s} onPress={() => router.push(`/booking/${s.id}`)} />
-        </Animated.View>
+        </FadeUp>
       ))}
       <SectionHeader number={4} eyebrow="Our team" title="Meet the stylists" />
       {stylists.map((s, i) => (
-        <Animated.View key={s.id} entering={entering(i)}>
+        <FadeUp key={s.id} index={i} animate={!hasAnimated.current}>
           <StylistCard stylist={s} />
-        </Animated.View>
+        </FadeUp>
       ))}
     </ScreenContainer>
   );

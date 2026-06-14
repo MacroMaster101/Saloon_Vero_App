@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from 'react';
-import { Text, Pressable } from 'react-native';
+import { Text } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { BackButton } from '@/components/ui/back-button';
 import { bookingReducer, initialBooking } from '@/lib/booking/booking-machine';
@@ -17,6 +17,7 @@ import { ThemedButton } from '@/components/ui/button';
 import { ThemeToggleButton } from '@/components/ui/theme-toggle-button';
 import { StepIndicator } from '@/components/ui/step-indicator';
 import { Card } from '@/components/ui/card';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
 import { LoadingScreen } from '@/components/ui/loading';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -129,7 +130,7 @@ export default function BookingFlow() {
   }
 
   return (
-    <ScreenContainer safeTop={false}>
+    <ScreenContainer safeTop={false} keyboardAware>
       <ScreenHeader
         eyebrow="BOOK YOUR VISIT"
         title={STEP_TITLES[state.step] ?? 'Booking'}
@@ -140,7 +141,7 @@ export default function BookingFlow() {
 
       <Animated.View key={state.step} entering={FadeIn.duration(220)} exiting={FadeOut.duration(120)} style={{ width: '100%', maxWidth: 440, alignSelf: 'center' }}>
         {state.step === 'stylist' && (<>
-          <Pressable
+          <PressableScale
             onPress={() => dispatch({ type: 'setStylist', stylistId: null })}
             style={{
               padding: Spacing.md,
@@ -152,7 +153,7 @@ export default function BookingFlow() {
             }}
           >
             <Text style={[Type.label, { color: c.accentText, textAlign: 'center', fontSize: 15, fontFamily: 'Poppins_600SemiBold' }]}>✨ Any available stylist</Text>
-          </Pressable>
+          </PressableScale>
           {stylists.map((s) => <StylistCard key={s.id} stylist={s} onPress={() => dispatch({ type: 'setStylist', stylistId: s.id })} />)}
         </>)}
 
@@ -166,7 +167,7 @@ export default function BookingFlow() {
             const isSelected = state.date === d;
 
             return (
-              <Pressable
+              <PressableScale
                 key={d}
                 onPress={() => dispatch({ type: 'setDate', date: d })}
                 style={{
@@ -181,7 +182,7 @@ export default function BookingFlow() {
                 <Text style={[Type.body, { color: isSelected ? c.bg : c.fg, fontFamily: 'Poppins_500Medium' }]}>
                   {weekdayStr}, {monthDayStr}
                 </Text>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </>)}
