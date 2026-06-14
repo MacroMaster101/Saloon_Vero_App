@@ -6,11 +6,9 @@ import { useTheme } from '@/hooks/use-theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Dimensions, Image, Platform, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { Card } from '@/components/ui/card';
-import { ScreenContainer } from '@/components/ui/screen';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -18,13 +16,9 @@ const SPLASH_DELAY_MS = process.env.NODE_ENV === 'test' ? 0 : 3000;
 
 export default function EntryScreen() {
   const { user, loading: sessionLoading, isGuest, profile, profileReady, recovering } = useSession();
-  const { c, scheme, Spacing, Type, Radius } = useTheme();
+  const { c, scheme, Spacing, Type } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const featureItemStyle = {
-    backgroundColor: c.surfaceRaised,
-    borderColor: c.hairline,
-  };
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
   const [delayFinished, setDelayFinished] = useState(process.env.NODE_ENV === 'test');
   const [progress, setProgress] = useState(0);
@@ -190,80 +184,82 @@ export default function EntryScreen() {
 
   // Render Onboarding Welcome Screen
   return (
-    <ScreenContainer scroll={false} style={{ padding: 0 }} safeTop={false}>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
       {/* Floating ThemeToggleButton */}
       <View style={{ position: 'absolute', top: insets.top + Spacing.sm, right: Spacing.md, zIndex: 10 }}>
         <ThemeToggleButton />
       </View>
 
-      {/* Top Graphic */}
-      <View style={[styles.heroContainer, { height: SCREEN_HEIGHT * 0.4 }]}>
-        <Image
-          source={require('@/assets/images/onboarding_hero.png')}
-          style={styles.heroImage}
-          resizeMode="cover"
-        />
-        {/* Subtle overlay blur — iOS only (no real blur on Android; the crisp image looks better
-            than expo-blur's flat tint there; disabled in dark mode to match Android's crisp style) */}
-        {Platform.OS === 'ios' && scheme !== 'dark' && (
-          <BlurView
-            intensity={15}
-            tint="dark"
-            style={StyleSheet.absoluteFillObject}
-          />
-        )}
-        <View style={styles.overlay} />
-      </View>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'space-between',
+          paddingBottom: insets.bottom + Spacing.xl,
+        }}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {/* Top Graphic Container */}
+        <View style={[styles.graphicWrapper, { paddingTop: insets.top }]}>
+          {/* Large stylist portrait cut-out */}
+          <View style={styles.stylistImageWrapper}>
+            <Image
+              source={require('@/assets/images/onboarding_stylist.png')}
+              style={styles.stylistImage}
+              resizeMode="contain"
+            />
+          </View>
 
-      {/* Bottom Content wrapped in premium glassy layout */}
-      <View style={[styles.contentContainer, { padding: Spacing.md, marginTop: -20, width: '100%', maxWidth: 520, alignSelf: 'center' }]}>
-        <Card style={{ flex: 1, justifyContent: 'space-between', gap: Spacing.sm }}>
-          <View>
-            <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 1.5, textTransform: 'uppercase' }]}>
-              Welcome to Saloon Vero
+          {/* Overlapping service cards */}
+          <View style={styles.cardsRow}>
+            {/* Left card */}
+            <Animated.View entering={FadeInDown.delay(200).duration(600)} style={{ zIndex: 1 }}>
+              <View style={[styles.miniCard, styles.leftCard, { borderColor: c.line, backgroundColor: c.surfaceRaised }]}>
+                <Image source={require('@/assets/images/service_wash.png')} style={styles.miniCardImage} resizeMode="cover" />
+              </View>
+            </Animated.View>
+
+            {/* Center card */}
+            <Animated.View entering={FadeInDown.delay(350).duration(600)} style={{ zIndex: 2 }}>
+              <View style={[styles.miniCard, styles.centerCard, { borderColor: c.accent, backgroundColor: c.surfaceRaised }]}>
+                <Image source={require('@/assets/images/service_style.png')} style={styles.miniCardImage} resizeMode="cover" />
+              </View>
+            </Animated.View>
+
+            {/* Right card */}
+            <Animated.View entering={FadeInDown.delay(500).duration(600)} style={{ zIndex: 1 }}>
+              <View style={[styles.miniCard, styles.rightCard, { borderColor: c.line, backgroundColor: c.surfaceRaised }]}>
+                <Image source={require('@/assets/images/service_facial.png')} style={styles.miniCardImage} resizeMode="cover" />
+              </View>
+            </Animated.View>
+          </View>
+        </View>
+
+        {/* Bottom Content */}
+        <View style={[styles.contentContainer, { paddingHorizontal: Spacing.lg }]}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginVertical: Spacing.lg }}>
+            {/* Brand & Tagline */}
+            <Text style={[Type.h1, { color: c.accent, textAlign: 'center', fontFamily: 'Poppins_800ExtraBold', fontSize: 24, letterSpacing: 0.2 }]}>
+              Beauty Salon <Text style={{ color: c.fg }}>&</Text> Barber
             </Text>
-            <Text style={[Type.display, { color: c.fg, marginTop: Spacing.xs }]}>
-              Redefine Your Style, Effortlessly
+            <Text style={[Type.display, { color: c.fg, textAlign: 'center', marginTop: 2, fontSize: 32, fontFamily: 'Poppins_800ExtraBold', lineHeight: 36 }]}>
+              Booking Made Easy
             </Text>
-            <Text style={[Type.body, { color: c.fg2, marginTop: Spacing.xs, marginBottom: Spacing.md, fontSize: 14 }]}>
+
+            {/* Description */}
+            <Text style={[Type.body, { color: c.fg2, textAlign: 'center', marginTop: Spacing.md, paddingHorizontal: Spacing.sm, fontSize: 14, lineHeight: 20 }]}>
               Step into premium care. Schedule expert haircuts, professional styling, and treatments in seconds.
             </Text>
-
-            {/* Feature Highlights */}
-            <View style={styles.featuresList}>
-              <Animated.View entering={FadeInDown.delay(200).duration(500)} style={[styles.featureItem, featureItemStyle, { padding: Spacing.sm, borderRadius: Radius.md, borderWidth: 1 }]}>
-                <Text style={styles.featureIcon}>✂️</Text>
-                <View style={styles.featureTextContainer}>
-                  <Text style={[Type.label, { color: c.fg }]}>Expert Stylists</Text>
-                  <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>Custom trims and style consultations</Text>
-                </View>
-              </Animated.View>
-
-              <Animated.View entering={FadeInDown.delay(350).duration(500)} style={[styles.featureItem, featureItemStyle, { padding: Spacing.sm, borderRadius: Radius.md, borderWidth: 1 }]}>
-                <Text style={styles.featureIcon}>📅</Text>
-                <View style={styles.featureTextContainer}>
-                  <Text style={[Type.label, { color: c.fg }]}>Real-time Booking</Text>
-                  <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>Instant slot confirmations, zero phone tag</Text>
-                </View>
-              </Animated.View>
-
-              <Animated.View entering={FadeInDown.delay(500).duration(500)} style={[styles.featureItem, featureItemStyle, { padding: Spacing.sm, borderRadius: Radius.md, borderWidth: 1 }]}>
-                <Text style={styles.featureIcon}>✨</Text>
-                <View style={styles.featureTextContainer}>
-                  <Text style={[Type.label, { color: c.fg }]}>Luxe Experience</Text>
-                  <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>Relaxing atmosphere and premium care products</Text>
-                </View>
-              </Animated.View>
-            </View>
           </View>
 
           {/* Action Button */}
-          <Animated.View entering={FadeInDown.delay(650).duration(500)} style={{ marginTop: Spacing.md }}>
-            <ThemedButton variant="primary" label="Get Started" onPress={handleGetStarted} />
+          <Animated.View entering={FadeInDown.delay(650).duration(500)} style={{ width: '100%', maxWidth: 360, alignSelf: 'center', marginTop: Spacing.lg, marginBottom: Spacing.sm }}>
+            <ThemedButton variant="primary" label="Let's Get Started" onPress={handleGetStarted} style={{ backgroundColor: c.ctaBg }} />
           </Animated.View>
-        </Card>
-      </View>
-    </ScreenContainer>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -316,40 +312,66 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 2,
   },
-  heroContainer: {
+  graphicWrapper: {
     width: '100%',
     position: 'relative',
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginBottom: 24,
   },
-  heroImage: {
+  stylistImageWrapper: {
+    width: '100%',
+    height: SCREEN_HEIGHT * 0.40,
+    alignSelf: 'center',
+    marginTop: 24,
+  },
+  stylistImage: {
     width: '100%',
     height: '100%',
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
+  cardsRow: {
+    position: 'absolute',
+    bottom: -20,
+    flexDirection: 'row',
+    alignSelf: 'center',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    width: '100%',
+    height: 140,
+  },
+  miniCard: {
+    width: 105,
+    height: 125,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  miniCardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  leftCard: {
+    transform: [{ rotate: '-8deg' }],
+    marginRight: -16,
+    bottom: -6,
+  },
+  centerCard: {
+    width: 115,
+    height: 135,
+    bottom: 6,
+  },
+  rightCard: {
+    transform: [{ rotate: '8deg' }],
+    marginLeft: -16,
+    bottom: -6,
   },
   contentContainer: {
     flex: 1,
-    justifyContent: 'flex-start',
-  },
-  featuresList: {
-    gap: 16,
-    marginVertical: 12,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  featureIcon: {
-    fontSize: 24,
-    textAlign: 'center',
-    width: 32,
-  },
-  featureTextContainer: {
-    flex: 1,
+    justifyContent: 'space-between',
   },
 });

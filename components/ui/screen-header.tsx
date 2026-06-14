@@ -15,13 +15,13 @@ export function ScreenHeader({ eyebrow, title, subtitle, left, right }: {
   const insets = useSafeAreaInsets();
   return (
     <LinearGradient
-      colors={[c.bg2, c.bg]}
+      colors={[c.accentTint, c.bg]}
       style={{
         marginHorizontal: -Spacing.md, // bleed past ScreenContainer padding
         paddingHorizontal: Spacing.md, 
         paddingTop: insets.top + Spacing.sm, 
         paddingBottom: Spacing.lg,
-        borderBottomWidth: 1, borderBottomColor: c.hairline, marginBottom: Spacing.sm,
+        marginBottom: Spacing.sm,
       }}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: Spacing.sm }}>

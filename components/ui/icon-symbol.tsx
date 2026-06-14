@@ -18,6 +18,7 @@ export type IconSymbolName = keyof typeof MAPPING & SymbolViewProps['name'];
 const MAPPING = {
   'house.fill': 'home',
   'paperplane.fill': 'send',
+  'envelope.fill': 'mail',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
   'chevron.left': 'chevron-left',

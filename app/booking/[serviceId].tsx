@@ -531,7 +531,7 @@ export default function BookingFlow() {
               </View>
 
               {/* ── Your Details form ── */}
-              <Card style={{ padding: Spacing.lg, gap: 0 }}>
+              <Card flatOnMobile style={{ padding: Spacing.lg, gap: 0 }}>
                 {/* Section label */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.md }}>
                   <MaterialIcons name="person-outline" size={15} color={c.accentText} />
