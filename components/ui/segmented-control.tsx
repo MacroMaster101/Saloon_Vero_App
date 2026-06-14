@@ -1,7 +1,8 @@
 import { Pressable, Text, View } from 'react-native';
+import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { useTheme } from '@/hooks/use-theme';
 
-export type SegmentOption<T extends string> = { value: T; label: string; emoji?: string };
+export type SegmentOption<T extends string> = { value: T; label: string; icon?: IconSymbolName; emoji?: string };
 
 export function SegmentedControl<T extends string>({ options, value, onChange }: {
   options: readonly SegmentOption<T>[];
@@ -24,9 +25,12 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
               selected && { backgroundColor: c.surfaceRaised, ...Shadow.sm },
             ]}
           >
-            <Text style={[Type.label, { fontSize: 12, color: selected ? c.accentText : c.fgMuted }]}>
-              {opt.emoji ? `${opt.emoji} ` : ''}{opt.label}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              {opt.icon ? <IconSymbol name={opt.icon} size={15} color={selected ? c.accentText : c.fgMuted} /> : null}
+              <Text style={[Type.label, { fontSize: 12, color: selected ? c.accentText : c.fgMuted }]}>
+                {opt.emoji ? `${opt.emoji} ` : ''}{opt.label}
+              </Text>
+            </View>
           </Pressable>
         );
       })}
