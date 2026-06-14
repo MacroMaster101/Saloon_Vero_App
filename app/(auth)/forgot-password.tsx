@@ -39,11 +39,12 @@ export default function ForgotPassword() {
     <ScreenContainer safeTop={false} keyboardAware>
       <ScreenHeader eyebrow="SALOON VERO" title="Reset password" left={<BackButton />} right={<ThemeToggleButton />} />
       <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
-      <Card style={{ padding: Spacing.lg, marginTop: Spacing.md }}>
+      <Card flatOnMobile style={{ padding: Spacing.lg, marginTop: Spacing.md }}>
         <Text style={[Type.body, { color: c.fg2, marginBottom: Spacing.md }]}>
           Enter your email and we&apos;ll send you a reset code.
         </Text>
         <ThemedTextInput
+          icon="envelope.fill"
           label="Email"
           placeholder="you@email.com"
           autoCapitalize="none"

@@ -111,7 +111,7 @@ export default function ResetPassword() {
       <ScreenContainer safeTop={false} keyboardAware>
         <ScreenHeader eyebrow="SALOON VERO" title="Reset password" />
         <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
-        <Card style={{ padding: Spacing.lg, gap: Spacing.sm, marginTop: Spacing.md }}>
+        <Card flatOnMobile style={{ padding: Spacing.lg, gap: Spacing.sm, marginTop: Spacing.md }}>
           <Text style={{ fontSize: 40, textAlign: 'center' }}>⏳</Text>
           <Text style={[Type.h2, { color: c.fg, textAlign: 'center' }]}>Start over</Text>
           <Text style={[Type.body, { color: c.fg2, textAlign: 'center' }]}>
@@ -129,7 +129,7 @@ export default function ResetPassword() {
       <ScreenContainer safeTop={false} keyboardAware>
         <ScreenHeader eyebrow="SALOON VERO" title="Reset password" />
         <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
-        <Card style={{ padding: Spacing.lg, gap: Spacing.sm, marginTop: Spacing.md }}>
+        <Card flatOnMobile style={{ padding: Spacing.lg, gap: Spacing.sm, marginTop: Spacing.md }}>
           <Text style={{ fontSize: 40, textAlign: 'center' }}>✅</Text>
           <Text style={[Type.h2, { color: c.fg, textAlign: 'center' }]}>Password updated</Text>
           <Text style={[Type.body, { color: c.fg2, textAlign: 'center' }]}>
@@ -148,7 +148,7 @@ export default function ResetPassword() {
       <ScreenContainer safeTop={false} keyboardAware>
         <ScreenHeader eyebrow="SALOON VERO" title="Enter reset code" />
         <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
-        <Card style={{ padding: Spacing.lg, marginTop: Spacing.md }}>
+        <Card flatOnMobile style={{ padding: Spacing.lg, marginTop: Spacing.md }}>
           <Text style={[Type.body, { color: c.fg2, marginBottom: Spacing.md }]}>
             We emailed a code to{'\n'}
             <Text style={{ fontFamily: 'Poppins_600SemiBold', color: c.accentText }}>{email}</Text>
@@ -181,11 +181,12 @@ export default function ResetPassword() {
     <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="SALOON VERO" title="Set a new password" />
       <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
-      <Card style={{ padding: Spacing.lg, marginTop: Spacing.md }}>
+      <Card flatOnMobile style={{ padding: Spacing.lg, marginTop: Spacing.md }}>
         <Text style={[Type.body, { color: c.fg2, marginBottom: Spacing.md }]}>
           Choose a new password for your account.
         </Text>
         <ThemedTextInput
+          icon="lock.fill"
           label="New password"
           placeholder="••••••••"
           secureToggle
@@ -193,12 +194,12 @@ export default function ResetPassword() {
           onChangeText={(t) => { setPassword(t); setError(null); }}
         />
         <ThemedTextInput
+          icon="lock.fill"
           label="Confirm password"
           placeholder="••••••••"
           secureToggle
           value={confirm}
           onChangeText={(t) => { setConfirm(t); setError(null); }}
-          style={{ marginBottom: Spacing.md }}
         />
         {error && <Text style={[Type.caption, { color: c.error, marginBottom: Spacing.sm, textAlign: 'center' }]}>{error}</Text>}
         <ThemedButton label="Update password" busy={busy} onPress={updatePassword} />

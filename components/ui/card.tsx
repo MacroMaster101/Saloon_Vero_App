@@ -1,10 +1,24 @@
 import { ReactNode } from 'react';
-import { View, ViewStyle, Platform } from 'react-native';
+import { View, ViewStyle, Platform, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/hooks/use-theme';
 
-export function Card({ children, style, accent = false }: { children: ReactNode; style?: ViewStyle; accent?: boolean }) {
+export function Card({
+  children,
+  style,
+  accent = false,
+  flatOnMobile = false,
+}: {
+  children: ReactNode;
+  style?: ViewStyle;
+  accent?: boolean;
+  flatOnMobile?: boolean;
+}) {
   const { c, Radius, Shadow, Spacing, scheme } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+
+  const isMobile = screenWidth < 500;
+  const isFlat = flatOnMobile && isMobile;
 
   // Destructure layout styles to apply on the outer container, 
   // and inner styles for the padding container.
@@ -48,6 +62,52 @@ export function Card({ children, style, accent = false }: { children: ReactNode;
     overflow,
     ...innerStyles
   } = (style || {}) as any;
+
+  if (isFlat) {
+    const flatOuterStyles: ViewStyle = {
+      margin,
+      marginHorizontal,
+      marginVertical,
+      marginTop,
+      marginBottom,
+      marginLeft,
+      marginRight,
+      width,
+      height,
+      minWidth,
+      maxWidth,
+      minHeight,
+      maxHeight,
+      flex,
+      flexGrow,
+      flexShrink,
+      flexBasis,
+      alignSelf,
+      position,
+      top,
+      bottom,
+      left,
+      right,
+      zIndex,
+      borderRadius: 0,
+      backgroundColor: 'transparent',
+    };
+    const flatInnerStyles = {
+      ...innerStyles,
+      padding: 0,
+      paddingHorizontal: 0,
+      paddingVertical: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+      paddingLeft: 0,
+      paddingRight: 0,
+    };
+    return (
+      <View style={[flatOuterStyles, flatInnerStyles]}>
+        {children}
+      </View>
+    );
+  }
 
   const outerStyles: ViewStyle = {
     margin,

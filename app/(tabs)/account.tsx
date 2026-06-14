@@ -96,7 +96,7 @@ export default function Account() {
       </Card>
 
       <SectionHeader number={2} eyebrow="Your details" title="Profile" />
-      <Card style={{ padding: Spacing.lg, gap: Spacing.xs }}>
+      <Card flatOnMobile style={{ padding: Spacing.lg, gap: Spacing.xs }}>
         <ThemedTextInput label="Name" value={name} onChangeText={setName} />
         <ThemedTextInput label="Mobile" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
         <ThemedButton label="Save Details" onPress={saveProfile} style={{ marginTop: Spacing.xs }} />

@@ -120,7 +120,7 @@ export default function Signup() {
       <ScreenContainer safeTop={false} keyboardAware>
         <ScreenHeader eyebrow="SALOON VERO" title="Confirm your email" right={<ThemeToggleButton />} />
         <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
-        <Card style={{ padding: Spacing.lg, gap: Spacing.sm, marginTop: Spacing.md }}>
+        <Card flatOnMobile style={{ padding: Spacing.lg, gap: Spacing.sm, marginTop: Spacing.md }}>
           <Text style={{ fontSize: 40, textAlign: 'center' }}>📬</Text>
           <Text style={[Type.h2, { color: c.fg, textAlign: 'center' }]}>Enter your code</Text>
           <Text style={[Type.body, { color: c.fg2, textAlign: 'center' }]}>
@@ -165,15 +165,17 @@ export default function Signup() {
       />
 
       <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
-      <Card style={{ padding: Spacing.lg }}>
+      <Card flatOnMobile style={{ padding: Spacing.lg }}>
 
         <ThemedTextInput
+          icon="person.fill"
           label="Full name"
           placeholder="Your name"
           value={name}
           onChangeText={(t) => { setName(t); setError(null); }}
         />
         <ThemedTextInput
+          icon="phone.fill"
           label="Mobile"
           placeholder="07x xxx xxxx"
           keyboardType="phone-pad"
@@ -181,6 +183,7 @@ export default function Signup() {
           onChangeText={(t) => { setPhone(t); setError(null); }}
         />
         <ThemedTextInput
+          icon="envelope.fill"
           label="Email"
           placeholder="you@email.com"
           autoCapitalize="none"
@@ -191,6 +194,7 @@ export default function Signup() {
           onChangeText={(t) => { setEmail(t); setError(null); }}
         />
         <ThemedTextInput
+          icon="lock.fill"
           label="Password"
           placeholder="••••••••"
           secureToggle
@@ -198,12 +202,12 @@ export default function Signup() {
           onChangeText={(t) => { setPassword(t); setError(null); }}
         />
         <ThemedTextInput
+          icon="lock.fill"
           label="Confirm password"
           placeholder="••••••••"
           secureToggle
           value={confirm}
           onChangeText={(t) => { setConfirm(t); setError(null); }}
-          style={{ marginBottom: Spacing.md }}
         />
 
         {error && <Text style={[Type.caption, { color: c.error, marginBottom: Spacing.md, textAlign: 'center' }]}>{error}</Text>}

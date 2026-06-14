@@ -39,9 +39,10 @@ export function GoogleButton({ onPress, busy }: { onPress: () => void; busy?: bo
           {
             backgroundColor: bg,
             borderColor: border,
-            borderRadius: Radius.md,
+            borderRadius: Radius.pill,
             paddingVertical: Spacing.md - 2,
             paddingHorizontal: Spacing.md,
+            overflow: 'hidden',
           },
           shadowStyle,
         ]}
@@ -53,9 +54,6 @@ export function GoogleButton({ onPress, busy }: { onPress: () => void; busy?: bo
           </Text>
         </View>
       </Pressable>
-      <Text style={[Type.caption, { color: c.fgMuted, textAlign: 'center', marginTop: 6 }]}>
-        Sign in with your Google account
-      </Text>
     </View>
   );
 }

@@ -52,9 +52,10 @@ export default function Login() {
       />
 
       <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
-      <Card style={{ padding: Spacing.lg }}>
+      <Card flatOnMobile style={{ padding: Spacing.lg }}>
 
         <ThemedTextInput
+          icon="envelope.fill"
           label="Email"
           placeholder="you@email.com"
           autoCapitalize="none"
@@ -65,6 +66,7 @@ export default function Login() {
           onChangeText={(t) => { setEmail(t); setError(null); }}
         />
         <ThemedTextInput
+          icon="lock.fill"
           label="Password"
           placeholder="••••••••"
           secureToggle

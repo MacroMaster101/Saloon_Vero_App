@@ -78,7 +78,7 @@ export default function AccessScreen() {
         </Text>
       </View>
 
-      <Card style={{ gap: Spacing.md, borderRadius: Radius.lg, padding: Spacing.lg }}>
+      <Card flatOnMobile style={{ gap: Spacing.md, borderRadius: Radius.lg, padding: Spacing.lg }}>
         <ThemedButton variant="secondary" label="Continue as Guest" busy={guestBusy} onPress={guest} />
         
         <GoogleButton busy={googleBusy} onPress={google} />
