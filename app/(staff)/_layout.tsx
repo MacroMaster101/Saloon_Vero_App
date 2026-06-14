@@ -1,15 +1,20 @@
-import { StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { Tabs, Redirect } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { LoadingScreen } from '@/components/ui/loading';
 import { useSession } from '@/context/session';
 import { useTheme } from '@/hooks/use-theme';
+import { Layout } from '@/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function StaffLayout() {
   const { c, scheme, Shadow } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  // Align the floating dock's edges with the cards: cards live inside a centered
+  // max-width column with a 16px gutter, so the dock's side offset matches.
+  const dockSide = (width - Math.min(width, Layout.maxContentWidth)) / 2 + 16;
   const { user, profile, profileReady, loading } = useSession();
 
   if (loading || !profileReady) return <LoadingScreen message="Loading your day..." />;
@@ -28,8 +33,8 @@ export default function StaffLayout() {
         position: 'absolute',
         // Android is edge-to-edge: keep the dock above the system nav bar.
         bottom: isIOS ? 24 : 16 + insets.bottom,
-        left: 16,
-        right: 16,
+        left: dockSide,
+        right: dockSide,
         height: 64,
         borderRadius: 32,
         backgroundColor: isIOS

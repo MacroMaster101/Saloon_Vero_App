@@ -75,3 +75,19 @@ export async function deleteGalleryItem(id: string): Promise<Result> {
   const { error } = await supabase.from('gallery').delete().eq('id', id);
   return toResult(error);
 }
+
+export async function deleteService(id: string): Promise<Result> {
+  const { error } = await supabase.from('services').delete().eq('id', id);
+  return toResult(error);
+}
+
+export async function deleteStylist(id: string): Promise<Result> {
+  const { error } = await supabase.from('stylists').delete().eq('id', id);
+  return toResult(error);
+}
+
+export async function deleteBooking(id: string): Promise<Result> {
+  const { error } = await supabase.from('bookings').delete().eq('id', id);
+  return toResult(error);
+}
+

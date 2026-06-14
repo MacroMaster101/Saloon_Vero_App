@@ -5,8 +5,10 @@ import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
 import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
-type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
-type IconSymbolName = keyof typeof MAPPING;
+type IconMapping = Partial<
+  Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>
+>;
+export type IconSymbolName = keyof typeof MAPPING & SymbolViewProps['name'];
 
 /**
  * Add your SF Symbols to Material Icons mappings here.
@@ -23,13 +25,27 @@ const MAPPING = {
   'clock.fill': 'schedule',
   'person.fill': 'person',
   'gearshape.fill': 'settings',
+  'chart.bar.fill': 'bar-chart',
   'sparkles': 'auto-awesome',
   'sun.max.fill': 'wb-sunny',
   'moon.fill': 'dark-mode',
   'circle.lefthalf.filled': 'contrast',
   'eye': 'visibility',
   'eye.slash': 'visibility-off',
-} as IconMapping;
+  'plus.circle.fill': 'add-circle',
+  'ellipsis.circle.fill': 'more-horiz',
+  'trash.fill': 'delete',
+  'magnifyingglass': 'search',
+  'checkmark': 'check',
+  'xmark': 'close',
+  'arrow.right': 'arrow-forward',
+  'tag.fill': 'local-offer',
+  'phone.fill': 'phone',
+  'person.2.fill': 'groups',
+  'photo.fill': 'photo',
+  'lock.fill': 'lock',
+  'slider.horizontal.3': 'tune',
+} satisfies IconMapping;
 
 /**
  * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.

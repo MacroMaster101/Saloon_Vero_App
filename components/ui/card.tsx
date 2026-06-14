@@ -18,7 +18,14 @@ export function Card({ children, style, accent = false }: { children: ReactNode;
     marginRight,
     width,
     height,
+    minWidth,
+    maxWidth,
+    minHeight,
+    maxHeight,
     flex,
+    flexGrow,
+    flexShrink,
+    flexBasis,
     alignSelf,
     position,
     top,
@@ -26,6 +33,19 @@ export function Card({ children, style, accent = false }: { children: ReactNode;
     left,
     right,
     zIndex,
+    borderRadius,
+    borderWidth,
+    borderColor,
+    borderLeftWidth,
+    borderLeftColor,
+    borderRightWidth,
+    borderRightColor,
+    borderTopWidth,
+    borderTopColor,
+    borderBottomWidth,
+    borderBottomColor,
+    backgroundColor,
+    overflow,
     ...innerStyles
   } = (style || {}) as any;
 
@@ -39,7 +59,14 @@ export function Card({ children, style, accent = false }: { children: ReactNode;
     marginRight,
     width,
     height,
+    minWidth,
+    maxWidth,
+    minHeight,
+    maxHeight,
     flex,
+    flexGrow,
+    flexShrink,
+    flexBasis,
     alignSelf,
     position,
     top,
@@ -47,7 +74,7 @@ export function Card({ children, style, accent = false }: { children: ReactNode;
     left,
     right,
     zIndex,
-    borderRadius: style?.borderRadius ?? Radius.xl,
+    borderRadius: borderRadius ?? Radius.sm,
   };
 
   const isIOS = Platform.OS === 'ios';
@@ -60,12 +87,20 @@ export function Card({ children, style, accent = false }: { children: ReactNode;
         style={[
           outerStyles, 
           { 
-            borderWidth: style?.borderWidth ?? 1,
+            borderWidth: borderWidth ?? 1,
+            borderLeftWidth,
+            borderRightWidth,
+            borderTopWidth,
+            borderBottomWidth,
             borderColor: accent
               ? c.accent
-              : (style?.borderColor ?? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(28, 26, 23, 0.08)')),
-            backgroundColor: style?.backgroundColor ?? (scheme === 'dark' ? 'rgba(30, 28, 25, 0.80)' : 'rgba(255, 255, 255, 0.70)'),
-            overflow: 'hidden',
+              : (borderColor ?? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(28, 26, 23, 0.08)')),
+            borderLeftColor,
+            borderRightColor,
+            borderTopColor,
+            borderBottomColor,
+            backgroundColor: backgroundColor ?? (scheme === 'dark' ? 'rgba(30, 28, 25, 0.80)' : 'rgba(255, 255, 255, 0.70)'),
+            overflow: overflow ?? 'hidden',
           },
           Shadow.sm
         ]}
@@ -83,16 +118,25 @@ export function Card({ children, style, accent = false }: { children: ReactNode;
       style={[
         outerStyles,
         {
-          backgroundColor: style?.backgroundColor ?? c.surfaceRaised,
-          borderWidth: style?.borderWidth ?? 1,
-          borderColor: accent ? c.accent : (style?.borderColor ?? c.line),
-          padding: Spacing.md,
-          ...innerStyles,
+          backgroundColor: backgroundColor ?? c.surfaceRaised,
+          borderWidth: borderWidth ?? 1,
+          borderLeftWidth,
+          borderRightWidth,
+          borderTopWidth,
+          borderBottomWidth,
+          borderColor: accent ? c.accent : (borderColor ?? c.line),
+          borderLeftColor,
+          borderRightColor,
+          borderTopColor,
+          borderBottomColor,
+          overflow,
         },
         Shadow.sm,
       ]}
     >
-      {children}
+      <View style={[{ padding: Spacing.md }, innerStyles]}>
+        {children}
+      </View>
     </View>
   );
 }

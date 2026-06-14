@@ -8,7 +8,7 @@ export function GuestHeader() {
   return (
     <Card style={{ gap: Spacing.sm, marginBottom: Spacing.md }}>
       <View>
-        <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'Poppins_600SemiBold' }]}>Guest mode</Text>
+        <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 0, textTransform: 'uppercase', fontFamily: 'Poppins_600SemiBold' }]}>Guest mode</Text>
         <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>Book now, then create an account anytime to keep everything together.</Text>
       </View>
       <View style={{ flexDirection: 'row', gap: Spacing.sm }}>

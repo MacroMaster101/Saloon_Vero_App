@@ -48,8 +48,8 @@ export function GoogleButton({ onPress, busy }: { onPress: () => void; busy?: bo
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm }}>
           <GoogleLogo size={18} />
-          <Text style={[Type.button, { color: fg, fontSize: 15, letterSpacing: 0.5 }]}>
-            {busy ? '…' : 'Continue with Google'}
+          <Text style={[Type.button, { color: fg, fontSize: 15, letterSpacing: 0 }]}>
+            {busy ? '...' : 'Continue with Google'}
           </Text>
         </View>
       </Pressable>

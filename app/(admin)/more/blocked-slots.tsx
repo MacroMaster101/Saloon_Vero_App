@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import {
   createBlockedSlot,
@@ -10,7 +10,9 @@ import {
 import type { AdminBlockedSlot } from '@/lib/api/admin';
 import { blockLabel } from '@/lib/admin/helpers';
 import { Card } from '@/components/ui/card';
+import { AdminChip, AdminIconAction, AdminSectionLabel } from '@/components/admin/admin-ui';
 import { EmptyState } from '@/components/ui/empty-state';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { BackButton } from '@/components/ui/back-button';
@@ -48,10 +50,10 @@ const HOURS = Array.from({ length: 12 }, (_, i) => {
 
 type DurationOption = { label: string; h: number };
 const DURATIONS: DurationOption[] = [
-  { label: '1h', h: 1 },
-  { label: '2h', h: 2 },
-  { label: '4h', h: 4 },
-  { label: 'All day', h: 24 },
+  { label: '1 hour', h: 1 },
+  { label: '2 hours', h: 2 },
+  { label: '4 hours', h: 4 },
+  { label: 'All day (24h)', h: 24 },
 ];
 
 function generateNextDays(n: number): { key: string; label: string }[] {
@@ -69,35 +71,6 @@ function generateNextDays(n: number): { key: string; label: string }[] {
     days.push({ key, label });
   }
   return days;
-}
-
-function Chip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  const { c, Radius, Spacing, Type } = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      style={{
-        backgroundColor: selected ? c.accentDark : c.surfaceRaised,
-        borderWidth: 1,
-        borderColor: selected ? c.accentDark : c.hairline,
-        borderRadius: Radius.pill,
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.xs + 2,
-      }}
-    >
-      <Text style={[Type.caption, { color: selected ? c.bg : c.fg2 }]}>{label}</Text>
-    </Pressable>
-  );
 }
 
 export default function BlockedSlots() {
@@ -134,10 +107,10 @@ export default function BlockedSlots() {
   const handleDelete = (slot: AdminBlockedSlot) => {
     const label = blockLabel(slot, stylists);
     Alert.alert(
-      'Remove block?',
-      label,
+      'Remove time block?',
+      `Remove block for "${label}"?`,
       [
-        { text: 'Keep' },
+        { text: 'Keep', style: 'cancel' },
         {
           text: 'Remove',
           style: 'destructive',
@@ -151,9 +124,9 @@ export default function BlockedSlots() {
   };
 
   const handleSave = async () => {
-    if (!selectedDate) { setFormError('Select a date.'); return; }
+    if (!selectedDate) { setFormError('Please select a date.'); return; }
     const durationOpt = DURATIONS.find((d) => d.h === selectedDuration);
-    if (!durationOpt) { setFormError('Select a duration.'); return; }
+    if (!durationOpt) { setFormError('Please select a duration.'); return; }
 
     let startsAt: string;
     let endsAt: string;
@@ -180,27 +153,29 @@ export default function BlockedSlots() {
 
   return (
     <ScreenContainer safeTop={false} keyboardAware>
-      <ScreenHeader eyebrow="MANAGE" title="Blocked slots" left={<BackButton />} />
+      <ScreenHeader eyebrow="CALENDAR" title="Blocked Slots" left={<BackButton />} />
 
       <ThemedButton
-        label={showForm ? '✕ Cancel' : '+ Block time'}
+        label={showForm ? 'Close Block Form' : 'Block Time / Chair'}
+        icon={showForm ? 'xmark' : 'plus.circle.fill'}
         variant={showForm ? 'secondary' : 'primary'}
         onPress={() => { setShowForm((v) => !v); setFormError(null); }}
         style={{ marginBottom: Spacing.md }}
       />
 
       {showForm && (
-        <Card style={{ marginBottom: Spacing.md, gap: Spacing.sm }}>
-          {/* Stylist chips */}
-          <Text style={[Type.label, { color: c.fgMuted, fontSize: 12 }]}>Stylist / Chair</Text>
+        <Card style={{ marginBottom: Spacing.lg, gap: Spacing.sm }}>
+          <AdminSectionLabel>Configure Time Block</AdminSectionLabel>
+
+          <Text style={[Type.label, { color: c.fgMuted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0, fontFamily: 'Poppins_600SemiBold' }]}>Stylist / Chair</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs }}>
-            <Chip
+            <AdminChip
               label="Whole salon"
               selected={stylistId === null}
               onPress={() => setStylistId(null)}
             />
             {activeStylists.map((s) => (
-              <Chip
+              <AdminChip
                 key={s.id}
                 label={s.name}
                 selected={stylistId === s.id}
@@ -209,12 +184,11 @@ export default function BlockedSlots() {
             ))}
           </View>
 
-          {/* Date chips */}
-          <Text style={[Type.label, { color: c.fgMuted, fontSize: 12, marginTop: Spacing.xs }]}>Date</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={{ flexDirection: 'row', gap: Spacing.xs }}>
+          <Text style={[Type.label, { color: c.fgMuted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0, marginTop: Spacing.xs, fontFamily: 'Poppins_600SemiBold' }]}>Date</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -Spacing.md }}>
+            <View style={{ flexDirection: 'row', gap: Spacing.xs, paddingHorizontal: Spacing.md }}>
               {days.map((day) => (
-                <Chip
+                <AdminChip
                   key={day.key}
                   label={day.label}
                   selected={selectedDate === day.key}
@@ -224,11 +198,10 @@ export default function BlockedSlots() {
             </View>
           </ScrollView>
 
-          {/* Duration chips */}
-          <Text style={[Type.label, { color: c.fgMuted, fontSize: 12, marginTop: Spacing.xs }]}>Duration</Text>
+          <Text style={[Type.label, { color: c.fgMuted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0, marginTop: Spacing.xs, fontFamily: 'Poppins_600SemiBold' }]}>Duration</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs }}>
             {DURATIONS.map((d) => (
-              <Chip
+              <AdminChip
                 key={d.label}
                 label={d.label}
                 selected={selectedDuration === d.h}
@@ -237,14 +210,13 @@ export default function BlockedSlots() {
             ))}
           </View>
 
-          {/* Start hour chips — hidden for All day */}
           {selectedDuration !== 24 && (
             <>
-              <Text style={[Type.label, { color: c.fgMuted, fontSize: 12, marginTop: Spacing.xs }]}>Start time</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={{ flexDirection: 'row', gap: Spacing.xs }}>
+              <Text style={[Type.label, { color: c.fgMuted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0, marginTop: Spacing.xs, fontFamily: 'Poppins_600SemiBold' }]}>Start time</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -Spacing.md }}>
+                <View style={{ flexDirection: 'row', gap: Spacing.xs, paddingHorizontal: Spacing.md }}>
                   {HOURS.map((h) => (
-                    <Chip
+                    <AdminChip
                       key={h}
                       label={h}
                       selected={selectedHour === h}
@@ -257,56 +229,56 @@ export default function BlockedSlots() {
           )}
 
           <ThemedTextInput
-            label="Reason (optional)"
+            label="Reason / Notes (optional)"
             value={reason}
             onChangeText={setReason}
+            placeholder="e.g. Lunch break, training, out of salon"
           />
 
           {!!formError && (
-            <Text style={[Type.caption, { color: c.error }]}>{formError}</Text>
+            <Text style={[Type.caption, { color: c.error, fontFamily: 'Poppins_600SemiBold' }]}>{formError}</Text>
           )}
 
-          <ThemedButton label="Save block" onPress={handleSave} busy={saving} />
+          <ThemedButton label="Create Time Block" onPress={handleSave} busy={saving} />
         </Card>
       )}
 
-      {/* Slot list */}
+      <AdminSectionLabel>Active Blocks</AdminSectionLabel>
       <View style={{ gap: Spacing.sm }}>
-        {loading ? (
-          <SkeletonCard count={3} />
-        ) : slots.length === 0 ? (
-          <EmptyState title="No upcoming blocks." />
-        ) : (
-          slots.map((slot) => {
-            const label = blockLabel(slot, stylists);
-            const start = new Date(slot.starts_at);
-            const end = new Date(slot.ends_at);
-            return (
-              <Card key={slot.id}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[Type.label, { color: c.fg, fontSize: 15 }]}>{label}</Text>
-                    <Text style={[Type.caption, { color: c.fgMuted, marginTop: Spacing.xs / 2 }]}>
-                      {slotDateFmt.format(start)}{' '}
-                      {slotTimeFmt.format(start)} – {slotTimeFmt.format(end)}
-                    </Text>
-                    {!!slot.reason && (
-                      <Text style={[Type.caption, { color: c.fgMuted, marginTop: Spacing.xs / 2 }]}>{slot.reason}</Text>
-                    )}
+          {loading ? (
+            <SkeletonCard count={3} />
+          ) : slots.length === 0 ? (
+            <EmptyState title="No upcoming blocked chairs." />
+          ) : (
+            slots.map((slot) => {
+              const label = blockLabel(slot, stylists);
+              const start = new Date(slot.starts_at);
+              const end = new Date(slot.ends_at);
+              return (
+                <Card key={slot.id} style={{ borderLeftWidth: 4, borderLeftColor: c.error, padding: 0, overflow: 'hidden' }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.md }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[Type.label, { color: c.fg, fontSize: 15, fontFamily: 'Poppins_600SemiBold' }]}>{label}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                        <IconSymbol name="calendar" size={13} color={c.fgMuted} />
+                        <Text style={[Type.caption, { color: c.fgMuted, fontFamily: 'Poppins_500Medium', flex: 1 }]} numberOfLines={1}>
+                          {slotDateFmt.format(start)}
+                        <Text style={{ color: c.fgMuted }}>{` - ${slotTimeFmt.format(start)} - ${slotTimeFmt.format(end)}`}</Text>
+                        </Text>
+                      </View>
+                      {!!slot.reason && (
+                        <Text style={[Type.caption, { color: c.fg2, fontStyle: 'italic', marginTop: 4, fontFamily: 'Poppins_400Regular' }]}>
+                          {slot.reason}
+                        </Text>
+                      )}
+                    </View>
+                    <AdminIconAction icon="trash.fill" label="Remove block" tone="danger" onPress={() => handleDelete(slot)} />
                   </View>
-                  <Pressable
-                    onPress={() => handleDelete(slot)}
-                    accessibilityRole="button"
-                    style={{ paddingLeft: Spacing.sm }}
-                  >
-                    <Text style={[Type.caption, { color: c.error }]}>Remove</Text>
-                  </Pressable>
-                </View>
-              </Card>
-            );
-          })
-        )}
-      </View>
+                </Card>
+              );
+            })
+          )}
+        </View>
     </ScreenContainer>
   );
 }

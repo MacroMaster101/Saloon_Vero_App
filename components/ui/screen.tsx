@@ -19,20 +19,15 @@ export function ScreenContainer({
   safeTop?: boolean;
   keyboardAware?: boolean;
 }) {
-  const { c, Spacing, scheme } = useTheme();
+  const { c, Spacing } = useTheme();
   const insets = useSafeAreaInsets();
-
-  const blobColors = scheme === 'dark'
-    ? { blob1: 'rgba(217, 166, 72, 0.04)', blob2: 'rgba(217, 166, 72, 0.03)', blob3: 'rgba(217, 166, 72, 0.02)' }
-    : { blob1: 'rgba(168, 122, 46, 0.05)', blob2: 'rgba(168, 122, 46, 0.04)', blob3: 'rgba(168, 122, 46, 0.03)' };
-  const showBlobs = Platform.OS === 'ios' && scheme !== 'dark';
 
   const column = { width: '100%' as const, maxWidth: Layout.maxContentWidth, alignSelf: 'center' as const };
   const dockGap = tabBarBottomGap(insets.bottom);
 
   const inner = scroll ? (
     <ScrollView
-      style={{ backgroundColor: c.bg }}
+      style={{ flex: 1, backgroundColor: c.bg }}
       contentContainerStyle={[
         styles.scrollContent,
         { paddingHorizontal: Spacing.md, paddingBottom: dockGap, paddingTop: safeTop ? Spacing.md : 0 },
@@ -53,13 +48,6 @@ export function ScreenContainer({
 
   return (
     <View style={[styles.wrapper, { backgroundColor: c.bg }]}>
-      {showBlobs && (
-        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-          <View style={[styles.blob, { width: 320, height: 320, borderRadius: 160, backgroundColor: blobColors.blob1, top: -90, right: -80 }]} />
-          <View style={[styles.blob, { width: 280, height: 280, borderRadius: 140, backgroundColor: blobColors.blob2, bottom: 60, left: -70 }]} />
-          <View style={[styles.blob, { width: 200, height: 200, borderRadius: 100, backgroundColor: blobColors.blob3, top: '45%', right: -60 }]} />
-        </View>
-      )}
       <SafeAreaView style={[styles.safe, { backgroundColor: c.bg }]} edges={safeTop ? ['top'] : []}>
         {keyboardAware ? (
           <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -76,5 +64,4 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   flex: { flex: 1 },
   scrollContent: { flexGrow: 1 },
-  blob: { position: 'absolute', opacity: 0.95 },
 });

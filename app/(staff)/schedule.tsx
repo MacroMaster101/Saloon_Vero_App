@@ -13,6 +13,7 @@ import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SectionHeader } from '@/components/ui/section-header';
 import { StaffBookingCard } from '@/components/staff/booking-card';
+import { StaffMetricCard, StaffSectionLabel } from '@/components/staff/staff-ui';
 import { ThemeToggleButton } from '@/components/ui/theme-toggle-button';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -50,18 +51,17 @@ export default function Schedule() {
     setInitialLoading(false);
   }, [stylistId]);
 
-  useFocusEffect(useCallback(() => {
-    load();
-  }, [load]));
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
-  // Gate: flip after first data render so the cascade only plays once
   useEffect(() => {
     if (!initialLoading) hasAnimated.current = true;
   }, [initialLoading]);
 
   const handleSetStatus = async (id: string, status: AdminBookingStatus) => {
-    // Optimistically update whichever list holds the booking (History can hold
-    // past bookings still marked confirmed, which staff may reconcile late).
     const prevUpcoming = upcoming;
     const prevHistory = history;
     setUpcoming(applyStatus(upcoming, id, status));
@@ -70,7 +70,7 @@ export default function Schedule() {
     if ('error' in res) {
       setUpcoming(prevUpcoming);
       setHistory(prevHistory);
-      setError("Couldn't update — try again");
+      setError("Couldn't update status. Please try again.");
     } else {
       setError(null);
     }
@@ -86,6 +86,8 @@ export default function Schedule() {
 
   const groups = groupByDay(upcoming);
   const historyDesc = [...history].reverse();
+  const confirmed = upcoming.filter((booking) => booking.status === 'confirmed').length;
+  const completedHistory = history.filter((booking) => booking.status === 'completed').length;
 
   return (
     <ScreenContainer
@@ -102,20 +104,37 @@ export default function Schedule() {
         />
       }
     >
-      <ScreenHeader eyebrow="SCHEDULE" title="My week" right={<ThemeToggleButton />} />
+      <ScreenHeader
+        eyebrow="Roster"
+        title="My Week"
+        subtitle="Upcoming appointments and recent history."
+        right={<ThemeToggleButton />}
+      />
 
       {!!error && (
-        <Text style={[Type.caption, { color: c.error, marginBottom: Spacing.sm }]}>{error}</Text>
+        <Text style={[Type.caption, { color: c.error, marginBottom: Spacing.sm, fontFamily: 'Poppins_600SemiBold' }]}>{error}</Text>
       )}
 
+      <View style={{ gap: Spacing.sm, marginBottom: Spacing.lg }}>
+        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+          <StaffMetricCard label="Upcoming" value={String(upcoming.length)} detail="next 7 days" icon="calendar" tone="accent" />
+          <StaffMetricCard label="Waiting" value={String(confirmed)} detail="confirmed" icon="clock.fill" tone="neutral" />
+        </View>
+        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+          <StaffMetricCard label="History" value={String(history.length)} detail="past 30 days" icon="arrow.right" tone="muted" />
+          <StaffMetricCard label="Completed" value={String(completedHistory)} detail="recent" icon="checkmark" tone="success" />
+        </View>
+      </View>
+
+      <StaffSectionLabel>Upcoming Schedule</StaffSectionLabel>
       {groups.length === 0 ? (
         <EmptyState title="No upcoming appointments this week." />
       ) : (
         groups.map((group, groupIndex) => (
           <View key={group.dayKey}>
-            <SectionHeader number={groupIndex + 1} title={group.dayLabel} />
-            {group.items.map((booking, i) => (
-              <FadeUp key={booking.id} index={i} animate={!hasAnimated.current}>
+            <SectionHeader title={group.dayLabel} />
+            {group.items.map((booking, index) => (
+              <FadeUp key={booking.id} index={index + groupIndex} animate={!hasAnimated.current}>
                 <StaffBookingCard
                   booking={booking}
                   serviceName={serviceLabel(services, booking.service_id)}
@@ -127,15 +146,16 @@ export default function Schedule() {
         ))
       )}
 
-      <SectionHeader eyebrow="Past 30 days" title="History" />
+      <StaffSectionLabel style={{ marginTop: Spacing.lg }}>Recent History</StaffSectionLabel>
       {historyDesc.length === 0 ? (
         <EmptyState title="No history yet." />
       ) : (
-        historyDesc.map((booking, i) => (
-          <FadeUp key={booking.id} index={i} animate={!hasAnimated.current}>
+        historyDesc.map((booking, index) => (
+          <FadeUp key={booking.id} index={index} animate={!hasAnimated.current}>
             <StaffBookingCard
               booking={booking}
               serviceName={serviceLabel(services, booking.service_id)}
+              allowUndo
               onSetStatus={handleSetStatus}
             />
           </FadeUp>

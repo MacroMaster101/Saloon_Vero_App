@@ -189,36 +189,38 @@ export default function Schedules() {
                 </View>
 
                 <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                  <PressableScale
-                    onPress={() => Linking.openURL('tel:+94771234567')}
-                    accessibilityRole="button"
-                    style={{
-                      flex: 1,
-                      borderRadius: Radius.md,
-                      borderWidth: 1,
-                      borderColor: c.hairline,
-                      backgroundColor: c.surfaceRaised,
-                      alignItems: 'center',
-                      paddingVertical: Spacing.sm + 2,
-                    }}>
-                    <Text style={[Type.label, { color: c.fg, fontSize: 13, fontFamily: 'Poppins_600SemiBold' }]}>Call salon</Text>
-                  </PressableScale>
-                  <PressableScale
-                    onPress={() => router.push('/(tabs)/book')}
-                    accessibilityRole="button"
-                    style={{
-                      flex: 1,
-                      borderRadius: Radius.md,
-                      borderWidth: 1,
-                      borderColor: c.accentDark,
-                      backgroundColor: c.accentDark,
-                      alignItems: 'center',
-                      paddingVertical: Spacing.sm + 2,
-                    }}>
-                    <Text style={[Type.label, { color: c.bg, fontSize: 13, fontFamily: 'Poppins_600SemiBold' }]}>
-                      {isGuest ? 'Book again' : 'Reschedule'}
-                    </Text>
-                  </PressableScale>
+                  <View style={{ flex: 1 }}>
+                    <PressableScale
+                      onPress={() => Linking.openURL('tel:+94771234567')}
+                      accessibilityRole="button"
+                      style={{
+                        borderRadius: Radius.md,
+                        borderWidth: 1,
+                        borderColor: c.hairline,
+                        backgroundColor: c.surfaceRaised,
+                        alignItems: 'center',
+                        paddingVertical: Spacing.sm + 2,
+                      }}>
+                      <Text style={[Type.label, { color: c.fg, fontSize: 13, fontFamily: 'Poppins_600SemiBold' }]}>Call salon</Text>
+                    </PressableScale>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <PressableScale
+                      onPress={() => router.push('/(tabs)/book')}
+                      accessibilityRole="button"
+                      style={{
+                        borderRadius: Radius.md,
+                        borderWidth: 1,
+                        borderColor: c.accentDark,
+                        backgroundColor: c.accentDark,
+                        alignItems: 'center',
+                        paddingVertical: Spacing.sm + 2,
+                      }}>
+                      <Text style={[Type.label, { color: c.bg, fontSize: 13, fontFamily: 'Poppins_600SemiBold' }]}>
+                        {isGuest ? 'Book again' : 'Reschedule'}
+                      </Text>
+                    </PressableScale>
+                  </View>
                 </View>
               </Card>
             </FadeUp>

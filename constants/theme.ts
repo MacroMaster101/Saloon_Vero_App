@@ -46,7 +46,7 @@ export const Type = {
   label: { fontFamily: 'Poppins_600SemiBold', fontSize: 13 },
   caption: { fontFamily: 'Poppins_400Regular', fontSize: 12 },
   button: { fontFamily: 'Poppins_700Bold', fontSize: 16 },
-  eyebrow: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, letterSpacing: 2.5 },
+  eyebrow: { fontFamily: 'Poppins_600SemiBold', fontSize: 12, letterSpacing: 0 },
 } as const;
 
 export const Fonts = Platform.select({

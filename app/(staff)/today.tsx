@@ -9,11 +9,13 @@ import { useSession } from '@/context/session';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FadeUp } from '@/components/ui/fade-up';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SectionHeader } from '@/components/ui/section-header';
 import { StaffBookingCard } from '@/components/staff/booking-card';
+import { StaffMetricCard, StaffSectionLabel, StaffTextAction } from '@/components/staff/staff-ui';
 import { ThemeToggleButton } from '@/components/ui/theme-toggle-button';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -21,7 +23,7 @@ type Service = { id: string; name: string };
 
 const dayTitleFmt = new Intl.DateTimeFormat('en-LK', {
   timeZone: 'Asia/Colombo',
-  weekday: 'short',
+  weekday: 'long',
   day: 'numeric',
   month: 'short',
 });
@@ -32,6 +34,12 @@ const timeFmt = new Intl.DateTimeFormat('en-LK', {
   minute: '2-digit',
   hour12: true,
 });
+
+function completionPercent(bookings: StaffBooking[]) {
+  if (bookings.length === 0) return 0;
+  const completed = bookings.filter((booking) => booking.status === 'completed').length;
+  return Math.round((completed / bookings.length) * 100);
+}
 
 export default function Today() {
   const { c, Spacing, Type } = useTheme();
@@ -58,11 +66,12 @@ export default function Today() {
     setInitialLoading(false);
   }, [stylistId]);
 
-  useFocusEffect(useCallback(() => {
-    load();
-  }, [load]));
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
-  // Gate: flip after first data render so the cascade only plays once
   useEffect(() => {
     if (!initialLoading) hasAnimated.current = true;
   }, [initialLoading]);
@@ -73,7 +82,7 @@ export default function Today() {
     const res = await setBookingStatus(id, status);
     if ('error' in res) {
       setBookings(prev);
-      setError("Couldn't update — try again");
+      setError("Couldn't update status. Please try again.");
     } else {
       setError(null);
     }
@@ -90,6 +99,9 @@ export default function Today() {
   const now = new Date().toISOString();
   const nextBooking = nextUp(bookings, now);
   const dayTitle = dayTitleFmt.format(new Date());
+  const confirmedCount = bookings.filter((booking) => booking.status === 'confirmed').length;
+  const completedCount = bookings.filter((booking) => booking.status === 'completed').length;
+  const percentDone = completionPercent(bookings);
 
   return (
     <ScreenContainer
@@ -106,39 +118,65 @@ export default function Today() {
         />
       }
     >
-      <ScreenHeader eyebrow="TODAY" title={dayTitle} right={<ThemeToggleButton />} />
+      <ScreenHeader
+        eyebrow="Staff Desk"
+        title="Today"
+        subtitle={dayTitle}
+        right={<ThemeToggleButton />}
+      />
 
       {!!error && (
-        <Text style={[Type.caption, { color: c.error, marginBottom: Spacing.sm }]}>{error}</Text>
+        <Text style={[Type.caption, { color: c.error, marginBottom: Spacing.sm, fontFamily: 'Poppins_600SemiBold' }]}>{error}</Text>
       )}
 
-      <SectionHeader number={1} eyebrow="Next" title="Next up" />
+      <View style={{ gap: Spacing.sm, marginBottom: Spacing.lg }}>
+        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+          <StaffMetricCard label="Clients" value={String(bookings.length)} detail="today" icon="person.2.fill" tone="neutral" />
+          <StaffMetricCard label="Waiting" value={String(confirmedCount)} detail="confirmed" icon="clock.fill" tone="accent" />
+        </View>
+        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+          <StaffMetricCard label="Completed" value={String(completedCount)} detail={`${percentDone}% done`} icon="checkmark" tone="success" />
+          <StaffMetricCard label="Next" value={nextBooking ? timeFmt.format(new Date(nextBooking.starts_at)) : '-'} detail={nextBooking ? 'appointment' : 'clear'} icon="calendar" tone="muted" />
+        </View>
+      </View>
+
+      <SectionHeader eyebrow="Next Client" title="Ready Queue" />
       {nextBooking ? (
-        <Card accent style={{ marginBottom: Spacing.md }}>
-          <Text style={[Type.caption, { color: c.fgMuted }]}>
-            {timeFmt.format(new Date(nextBooking.starts_at))} – {timeFmt.format(new Date(nextBooking.ends_at))}
-          </Text>
-          <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold', marginTop: Spacing.xs }]}>
-            {nextBooking.customer_name}
-          </Text>
-          <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>
-            {serviceLabel(services, nextBooking.service_id)}
-          </Text>
+        <Card accent style={{ marginBottom: Spacing.lg, borderLeftWidth: 4, borderLeftColor: c.accent, gap: Spacing.sm }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.md }}>
+            <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <IconSymbol name="clock.fill" size={14} color={c.accent} />
+                <Text style={[Type.caption, { color: c.accentText, fontFamily: 'Poppins_600SemiBold' }]}>
+                  {timeFmt.format(new Date(nextBooking.starts_at))} - {timeFmt.format(new Date(nextBooking.ends_at))}
+                </Text>
+              </View>
+              <Text style={[Type.h2, { color: c.fg, fontFamily: 'Poppins_700Bold' }]} numberOfLines={1}>
+                {nextBooking.customer_name}
+              </Text>
+              <Text style={[Type.caption, { color: c.fgMuted }]} numberOfLines={1}>
+                {serviceLabel(services, nextBooking.service_id)}
+              </Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+            <StaffTextAction label="Complete" icon="checkmark" tone="success" onPress={() => handleSetStatus(nextBooking.id, 'completed')} />
+            <StaffTextAction label="No-show" icon="person.fill" tone="muted" onPress={() => handleSetStatus(nextBooking.id, 'no_show')} />
+          </View>
         </Card>
       ) : (
-        <Card style={{ marginBottom: Spacing.md }}>
-          <Text style={[Type.caption, { color: c.fgMuted }]}>Nothing more today.</Text>
+        <Card style={{ marginBottom: Spacing.lg }}>
+          <Text style={[Type.caption, { color: c.fgMuted }]}>No remaining confirmed appointments today.</Text>
         </Card>
       )}
 
-      <SectionHeader number={2} eyebrow="All day" title="Appointments" />
-
+      <StaffSectionLabel>Appointment List</StaffSectionLabel>
       {bookings.length === 0 ? (
-        <EmptyState title="No appointments today — enjoy the quiet ☕" />
+        <EmptyState title="No appointments today." />
       ) : (
         <View>
-          {bookings.map((booking, i) => (
-            <FadeUp key={booking.id} index={i} animate={!hasAnimated.current}>
+          {bookings.map((booking, index) => (
+            <FadeUp key={booking.id} index={index} animate={!hasAnimated.current}>
               <StaffBookingCard
                 booking={booking}
                 serviceName={serviceLabel(services, booking.service_id)}

@@ -1,10 +1,25 @@
-import { Text, ViewStyle, StyleSheet, Platform } from 'react-native';
+import { Text, ViewStyle, StyleSheet, Platform, View } from 'react-native';
+import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
 
 type Variant = 'primary' | 'secondary' | 'destructive' | 'social';
 
-export function ThemedButton({ label, onPress, variant = 'primary', busy = false, style }: { label: string; onPress?: () => void; variant?: Variant; busy?: boolean; style?: ViewStyle }) {
+export function ThemedButton({
+  label,
+  onPress,
+  variant = 'primary',
+  busy = false,
+  style,
+  icon,
+}: {
+  label: string;
+  onPress?: () => void;
+  variant?: Variant;
+  busy?: boolean;
+  style?: ViewStyle;
+  icon?: IconSymbolName;
+}) {
   const { c, Radius, Type, Spacing, Shadow, scheme } = useTheme();
   const isIOS = Platform.OS === 'ios';
 
@@ -25,7 +40,7 @@ export function ThemedButton({ label, onPress, variant = 'primary', busy = false
     border = c.line;
     fg = c.accentText;
   } else if (variant === 'destructive') {
-    // Ghost-destructive: transparent bg, error-coloured border and text — readable in both schemes
+    // Ghost-destructive: transparent bg, error-coloured border and text.
     bg = 'transparent';
     fg = c.error;
     border = c.error;
@@ -77,9 +92,12 @@ export function ThemedButton({ label, onPress, variant = 'primary', busy = false
         style,
       ]}
     >
-      <Text style={[Type.button, { color: fg, fontSize: 15, letterSpacing: 0.5 }]}>
-        {busy ? '…' : label}
-      </Text>
+      <View style={styles.labelRow}>
+        {!busy && icon ? <IconSymbol name={icon} size={18} color={fg} /> : null}
+        <Text style={[Type.button, { color: fg, fontSize: 15, letterSpacing: 0 }]}>
+          {busy ? '…' : label}
+        </Text>
+      </View>
     </PressableScale>
   );
 }
@@ -89,5 +107,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
 });
