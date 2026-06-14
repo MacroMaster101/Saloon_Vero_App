@@ -36,7 +36,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <ScreenContainer safeTop={false}>
+    <ScreenContainer safeTop={false} keyboardAware>
       <ScreenHeader eyebrow="SALOON VERO" title="Reset password" left={<BackButton />} right={<ThemeToggleButton />} />
       <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
       <Card style={{ padding: Spacing.lg, marginTop: Spacing.md }}>

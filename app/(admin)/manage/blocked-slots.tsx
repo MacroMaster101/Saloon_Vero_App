@@ -10,10 +10,11 @@ import {
 import type { AdminBlockedSlot } from '@/lib/api/admin';
 import { blockLabel } from '@/lib/admin/helpers';
 import { Card } from '@/components/ui/card';
-import { LoadingScreen } from '@/components/ui/loading';
+import { EmptyState } from '@/components/ui/empty-state';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { BackButton } from '@/components/ui/back-button';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { ThemedButton } from '@/components/ui/button';
 import { ThemedTextInput } from '@/components/ui/text-input';
 import { useTheme } from '@/hooks/use-theme';
@@ -177,10 +178,8 @@ export default function BlockedSlots() {
 
   const activeStylists = stylists.filter((s) => s.is_active);
 
-  if (loading) return <LoadingScreen message="Loading blocked slots..." />;
-
   return (
-    <ScreenContainer safeTop={false}>
+    <ScreenContainer safeTop={false} keyboardAware>
       <ScreenHeader eyebrow="MANAGE" title="Blocked slots" left={<BackButton />} />
 
       <ThemedButton
@@ -273,10 +272,10 @@ export default function BlockedSlots() {
 
       {/* Slot list */}
       <View style={{ gap: Spacing.sm }}>
-        {slots.length === 0 ? (
-          <Card>
-            <Text style={[Type.caption, { color: c.fgMuted }]}>No upcoming blocks.</Text>
-          </Card>
+        {loading ? (
+          <SkeletonCard count={3} />
+        ) : slots.length === 0 ? (
+          <EmptyState title="No upcoming blocks." />
         ) : (
           slots.map((slot) => {
             const label = blockLabel(slot, stylists);

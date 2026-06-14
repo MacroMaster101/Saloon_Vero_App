@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { getBookableServices } from '@/lib/api/queries';
 import { ServiceCard } from '@/components/services/service-card';
@@ -11,6 +10,9 @@ import { SectionHeader } from '@/components/ui/section-header';
 import { ThemeToggleButton } from '@/components/ui/theme-toggle-button';
 import { useSession } from '@/context/session';
 import { LoadingScreen } from '@/components/ui/loading';
+import { SkeletonCard } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { FadeUp } from '@/components/ui/fade-up';
 import { ThemedTextInput } from '@/components/ui/text-input';
 import { useTheme } from '@/hooks/use-theme';
 import type { Service } from '@/types/database';
@@ -42,7 +44,7 @@ export default function Book() {
     return matchesCategory && text.includes(query.trim().toLowerCase());
   });
 
-  if (loading || servicesLoading || (!user && !isGuest)) {
+  if (loading || (!user && !isGuest)) {
     return <LoadingScreen message="Verifying access..." />;
   }
 
@@ -87,12 +89,14 @@ export default function Book() {
           );
         })}
       </View>
-      {visibleServices.length === 0 ? (
-        <Text style={[Type.body, { color: c.fgMuted, textAlign: 'center', paddingVertical: Spacing.lg }]}>No services match your search.</Text>
+      {servicesLoading ? (
+        <SkeletonCard count={4} />
+      ) : visibleServices.length === 0 ? (
+        <EmptyState icon="✂️" title="No services found" caption="No services match your search." />
       ) : visibleServices.map((s, i) => (
-        <Animated.View key={s.id} entering={FadeInDown.delay(i * 60).duration(380)}>
+        <FadeUp key={s.id} index={i}>
           <ServiceCard service={s} onPress={() => router.push(`/booking/${s.id}`)} />
-        </Animated.View>
+        </FadeUp>
       ))}
     </ScreenContainer>
   );

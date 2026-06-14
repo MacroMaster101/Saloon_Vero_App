@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshControl, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import { getMyAssignedBookings, setBookingStatus } from '@/lib/api/staff';
 import type { StaffBooking, AdminBookingStatus } from '@/lib/api/staff';
 import { applyStatus, colomboDayWindow, groupByDay, serviceLabel } from '@/lib/staff/bookings-view';
 import { getServices } from '@/lib/api/queries';
 import { useSession } from '@/context/session';
-import { Card } from '@/components/ui/card';
-import { LoadingScreen } from '@/components/ui/loading';
+import { EmptyState } from '@/components/ui/empty-state';
+import { FadeUp } from '@/components/ui/fade-up';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SectionHeader } from '@/components/ui/section-header';
@@ -59,9 +59,6 @@ export default function Schedule() {
     if (!initialLoading) hasAnimated.current = true;
   }, [initialLoading]);
 
-  const entering = (i: number) =>
-    hasAnimated.current ? undefined : FadeInDown.delay(i * 60).duration(380);
-
   const handleSetStatus = async (id: string, status: AdminBookingStatus) => {
     // Optimistically update whichever list holds the booking (History can hold
     // past bookings still marked confirmed, which staff may reconcile late).
@@ -79,7 +76,13 @@ export default function Schedule() {
     }
   };
 
-  if (initialLoading) return <LoadingScreen message="Loading your week..." />;
+  if (initialLoading) {
+    return (
+      <ScreenContainer safeTop={false}>
+        <SkeletonCard count={4} />
+      </ScreenContainer>
+    );
+  }
 
   const groups = groupByDay(upcoming);
   const historyDesc = [...history].reverse();
@@ -106,23 +109,19 @@ export default function Schedule() {
       )}
 
       {groups.length === 0 ? (
-        <Card style={{ marginBottom: Spacing.md }}>
-          <Text style={[Type.caption, { color: c.fgMuted }]}>
-            No upcoming appointments this week.
-          </Text>
-        </Card>
+        <EmptyState title="No upcoming appointments this week." />
       ) : (
         groups.map((group, groupIndex) => (
           <View key={group.dayKey}>
             <SectionHeader number={groupIndex + 1} title={group.dayLabel} />
             {group.items.map((booking, i) => (
-              <Animated.View key={booking.id} entering={entering(i)}>
+              <FadeUp key={booking.id} index={i} animate={!hasAnimated.current}>
                 <StaffBookingCard
                   booking={booking}
                   serviceName={serviceLabel(services, booking.service_id)}
                   onSetStatus={handleSetStatus}
                 />
-              </Animated.View>
+              </FadeUp>
             ))}
           </View>
         ))
@@ -130,18 +129,16 @@ export default function Schedule() {
 
       <SectionHeader eyebrow="Past 30 days" title="History" />
       {historyDesc.length === 0 ? (
-        <Text style={[Type.caption, { color: c.fgMuted, marginBottom: Spacing.sm }]}>
-          No history yet.
-        </Text>
+        <EmptyState title="No history yet." />
       ) : (
         historyDesc.map((booking, i) => (
-          <Animated.View key={booking.id} entering={entering(i)}>
+          <FadeUp key={booking.id} index={i} animate={!hasAnimated.current}>
             <StaffBookingCard
               booking={booking}
               serviceName={serviceLabel(services, booking.service_id)}
               onSetStatus={handleSetStatus}
             />
-          </Animated.View>
+          </FadeUp>
         ))
       )}
     </ScreenContainer>

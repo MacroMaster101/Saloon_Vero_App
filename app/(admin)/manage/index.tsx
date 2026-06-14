@@ -1,8 +1,9 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { Card } from '@/components/ui/card';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
 
 type HubItem = {
@@ -29,7 +30,7 @@ export default function ManageIndex() {
 
       <View style={{ gap: Spacing.sm, marginTop: Spacing.sm }}>
         {ITEMS.map((item) => (
-          <Pressable
+          <PressableScale
             key={item.number}
             accessibilityRole="button"
             onPress={() => router.push(item.route as never)}
@@ -51,7 +52,7 @@ export default function ManageIndex() {
                 <Text style={[Type.h2, { color: c.fgMuted }]}>›</Text>
               </View>
             </Card>
-          </Pressable>
+          </PressableScale>
         ))}
       </View>
     </ScreenContainer>

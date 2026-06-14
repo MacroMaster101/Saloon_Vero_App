@@ -1,7 +1,8 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { dicebearUrl } from '@/lib/utils/avatar';
 import { useTheme } from '@/hooks/use-theme';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import type { Stylist } from '@/types/database';
 
 export function StylistCard({ stylist, selected, onPress }: { stylist: Stylist; selected?: boolean; onPress?: () => void }) {
@@ -9,7 +10,7 @@ export function StylistCard({ stylist, selected, onPress }: { stylist: Stylist; 
   const src = stylist.avatar_url?.startsWith('http') ? stylist.avatar_url : dicebearUrl(stylist.name);
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       style={{
         flexDirection: 'row',
@@ -28,6 +29,6 @@ export function StylistCard({ stylist, selected, onPress }: { stylist: Stylist; 
         <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold' }]}>{stylist.name}</Text>
         <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>{stylist.role}</Text>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }

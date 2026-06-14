@@ -1,5 +1,6 @@
 import { Alert, Linking, Pressable, Text, View } from 'react-native';
 import { Card } from '@/components/ui/card';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { StatusTag } from '@/components/ui/status-tag';
 import { useTheme } from '@/hooks/use-theme';
 import type { StaffBooking, AdminBookingStatus } from '@/lib/api/staff';
@@ -79,12 +80,12 @@ export function StaffBookingCard({
       <Text style={[Type.caption, { color: c.fgMuted }]}>{serviceName}</Text>
 
       {/* Phone */}
-      <Pressable
+      <PressableScale
         accessibilityRole="button"
         onPress={() => Linking.openURL(`tel:${booking.customer_phone}`)}
       >
         <Text style={[Type.caption, { color: c.accentText }]}>{booking.customer_phone}</Text>
-      </Pressable>
+      </PressableScale>
 
       {/* Status */}
       <StatusTag status={booking.status} />
@@ -98,7 +99,7 @@ export function StaffBookingCard({
 
       {/* Undo action — only when allowUndo and booking is not already confirmed */}
       {allowUndo && booking.status !== 'confirmed' && (
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
           onPress={() => onSetStatus(booking.id, 'confirmed')}
           style={{
@@ -114,7 +115,7 @@ export function StaffBookingCard({
           <Text style={[Type.caption, { color: c.accentDark, fontFamily: 'Poppins_600SemiBold' }]}>
             Undo to confirmed
           </Text>
-        </Pressable>
+        </PressableScale>
       )}
 
       {/* Action row — only for confirmed bookings */}

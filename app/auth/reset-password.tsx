@@ -100,7 +100,7 @@ export default function ResetPassword() {
 
   if (step === 'loading') {
     return (
-      <ScreenContainer safeTop={false}>
+      <ScreenContainer safeTop={false} keyboardAware>
         <ScreenHeader eyebrow="SALOON VERO" title="Reset password" />
       </ScreenContainer>
     );
@@ -108,7 +108,7 @@ export default function ResetPassword() {
 
   if (step === 'invalid') {
     return (
-      <ScreenContainer safeTop={false}>
+      <ScreenContainer safeTop={false} keyboardAware>
         <ScreenHeader eyebrow="SALOON VERO" title="Reset password" />
         <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
         <Card style={{ padding: Spacing.lg, gap: Spacing.sm, marginTop: Spacing.md }}>
@@ -126,7 +126,7 @@ export default function ResetPassword() {
 
   if (step === 'done') {
     return (
-      <ScreenContainer safeTop={false}>
+      <ScreenContainer safeTop={false} keyboardAware>
         <ScreenHeader eyebrow="SALOON VERO" title="Reset password" />
         <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
         <Card style={{ padding: Spacing.lg, gap: Spacing.sm, marginTop: Spacing.md }}>
@@ -145,7 +145,7 @@ export default function ResetPassword() {
   // Step 1 — enter the emailed code.
   if (step === 'code') {
     return (
-      <ScreenContainer safeTop={false}>
+      <ScreenContainer safeTop={false} keyboardAware>
         <ScreenHeader eyebrow="SALOON VERO" title="Enter reset code" />
         <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
         <Card style={{ padding: Spacing.lg, marginTop: Spacing.md }}>

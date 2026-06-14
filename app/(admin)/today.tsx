@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, RefreshControl, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { router, useFocusEffect } from 'expo-router';
 import { getAllBookings, getStylistsAdmin } from '@/lib/api/admin';
 import type { AdminBooking } from '@/lib/api/admin';
@@ -10,6 +9,8 @@ import { applyStatus, colomboDayWindow, nextUp, serviceLabel } from '@/lib/staff
 import { filterByStylist } from '@/lib/admin/helpers';
 import { getServices } from '@/lib/api/queries';
 import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { FadeUp } from '@/components/ui/fade-up';
 import { LoadingScreen } from '@/components/ui/loading';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
@@ -73,9 +74,6 @@ export default function AdminToday() {
   useEffect(() => {
     if (!initialLoading) hasAnimated.current = true;
   }, [initialLoading]);
-
-  const entering = (i: number) =>
-    hasAnimated.current ? undefined : FadeInDown.delay(i * 60).duration(380);
 
   const handleSetStatus = async (id: string, status: AdminBookingStatus) => {
     const prev = bookings;
@@ -155,7 +153,7 @@ export default function AdminToday() {
 
       <SectionHeader number={1} eyebrow="Next" title="Next up" />
       {nextBooking ? (
-        <Card style={{ borderColor: c.accent, marginBottom: Spacing.md }}>
+        <Card accent style={{ marginBottom: Spacing.md }}>
           <Text style={[Type.caption, { color: c.fgMuted }]}>
             {timeFmt.format(new Date(nextBooking.starts_at))} – {timeFmt.format(new Date(nextBooking.ends_at))}
           </Text>
@@ -175,13 +173,11 @@ export default function AdminToday() {
       <SectionHeader number={2} eyebrow="All day" title="Appointments" />
 
       {visible.length === 0 ? (
-        <Card>
-          <Text style={[Type.caption, { color: c.fgMuted }]}>No appointments today.</Text>
-        </Card>
+        <EmptyState title="No appointments today." />
       ) : (
         <View>
           {visible.map((booking, i) => (
-            <Animated.View key={booking.id} entering={entering(i)}>
+            <FadeUp key={booking.id} index={i} animate={!hasAnimated.current}>
               <StaffBookingCard
                 booking={booking}
                 serviceName={serviceLabel(services, booking.service_id)}
@@ -189,7 +185,7 @@ export default function AdminToday() {
                 allowUndo
                 onSetStatus={handleSetStatus}
               />
-            </Animated.View>
+            </FadeUp>
           ))}
         </View>
       )}

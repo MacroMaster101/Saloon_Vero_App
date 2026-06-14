@@ -117,7 +117,7 @@ export default function Signup() {
 
   if (confirmSentTo) {
     return (
-      <ScreenContainer safeTop={false}>
+      <ScreenContainer safeTop={false} keyboardAware>
         <ScreenHeader eyebrow="SALOON VERO" title="Confirm your email" right={<ThemeToggleButton />} />
         <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center' }}>
         <Card style={{ padding: Spacing.lg, gap: Spacing.sm, marginTop: Spacing.md }}>
@@ -156,7 +156,7 @@ export default function Signup() {
   }
 
   return (
-    <ScreenContainer safeTop={false}>
+    <ScreenContainer safeTop={false} keyboardAware>
       <ScreenHeader
         eyebrow="SALOON VERO"
         title="Create account"

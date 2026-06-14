@@ -42,7 +42,7 @@ export default function Login() {
   }
 
   return (
-    <ScreenContainer safeTop={false}>
+    <ScreenContainer safeTop={false} keyboardAware>
       <ScreenHeader
         eyebrow="SALOON VERO"
         title="Welcome back"

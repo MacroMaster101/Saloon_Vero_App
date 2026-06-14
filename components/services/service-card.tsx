@@ -1,13 +1,14 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { money } from '@/lib/utils/format';
 import { useTheme } from '@/hooks/use-theme';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import type { Service } from '@/types/database';
 
 export function ServiceCard({ service, onPress }: { service: Service; onPress?: () => void }) {
   const { c, Radius, Shadow, Spacing, Type } = useTheme();
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       style={[
         {
@@ -31,6 +32,6 @@ export function ServiceCard({ service, onPress }: { service: Service; onPress?: 
         <Text style={[Type.label, { color: c.accentDark, fontSize: 15, fontFamily: 'Poppins_700Bold' }]}>{money(service.price_lkr)}</Text>
         <Text style={[Type.caption, { color: c.fgMuted, marginTop: 2 }]}>{service.duration_min} min</Text>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }

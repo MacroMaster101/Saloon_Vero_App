@@ -47,7 +47,7 @@ export default function AccessScreen() {
   if (loading || user) return <LoadingScreen message="Preparing your access..." />;
 
   return (
-    <ScreenContainer scroll={false} style={{ justifyContent: 'center' }}>
+    <ScreenContainer scroll={false} keyboardAware style={{ justifyContent: 'center' }}>
       {/* Floating ThemeToggleButton */}
       <View style={{ position: 'absolute', top: Spacing.sm, right: Spacing.md, zIndex: 10 }}>
         <ThemeToggleButton />

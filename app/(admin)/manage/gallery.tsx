@@ -11,10 +11,10 @@ import {
 } from '@/lib/api/admin';
 import { uploadImage } from '@/lib/api/storage';
 import { Card } from '@/components/ui/card';
-import { LoadingScreen } from '@/components/ui/loading';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { BackButton } from '@/components/ui/back-button';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { ThemedButton } from '@/components/ui/button';
 import { ThemedTextInput } from '@/components/ui/text-input';
 import { useTheme } from '@/hooks/use-theme';
@@ -119,10 +119,8 @@ export default function Gallery() {
     setAddError(null);
   };
 
-  if (loading) return <LoadingScreen message="Loading gallery..." />;
-
   return (
-    <ScreenContainer safeTop={false}>
+    <ScreenContainer safeTop={false} keyboardAware>
       <ScreenHeader eyebrow="MANAGE" title="Gallery" left={<BackButton />} />
 
       {!pendingUri && (
@@ -159,8 +157,11 @@ export default function Gallery() {
       )}
 
       {/* Grid */}
+      {loading ? (
+        <SkeletonCard count={4} />
+      ) : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
-        {items.map((item) => (
+        {!loading && items.map((item) => (
           <Card key={item.id} style={{ width: '48%' }}>
             <Image
               source={{ uri: item.image_url }}

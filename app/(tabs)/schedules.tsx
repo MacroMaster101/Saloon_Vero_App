@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, Pressable, RefreshControl, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { Linking, RefreshControl, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { getBookableServices, getMyBookings, getStylists } from '@/lib/api/queries';
 import { getGuestBookings } from '@/lib/storage/guest-bookings';
@@ -15,6 +14,9 @@ import { StatusTag } from '@/components/ui/status-tag';
 import { ThemedButton } from '@/components/ui/button';
 import { ThemeToggleButton } from '@/components/ui/theme-toggle-button';
 import { LoadingScreen } from '@/components/ui/loading';
+import { EmptyState } from '@/components/ui/empty-state';
+import { FadeUp } from '@/components/ui/fade-up';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
 
 type UserBookingRow = {
@@ -122,8 +124,6 @@ export default function Schedules() {
     { title: 'Cancelled', data: bookings.filter((booking) => isCancelled(booking.status)) },
   ], [bookings]);
 
-  const entering = (i: number) => (hasAnimated.current ? undefined : FadeInDown.delay(i * 60).duration(380));
-
   if (loading || initialLoading) return <LoadingScreen message="Loading schedules..." />;
 
   if (!user && !isGuest) {
@@ -148,22 +148,25 @@ export default function Schedules() {
       {isGuest && <GuestHeader />}
 
       {bookings.length === 0 ? (
-        <Card style={{ alignItems: 'center', gap: Spacing.md, marginTop: Spacing.lg, padding: Spacing.lg }}>
-          <View style={{ width: 64, height: 64, borderRadius: Radius.pill, backgroundColor: c.accentTint, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: c.accentText, fontSize: 28 }}>+</Text>
-          </View>
-          <Text style={[Type.h2, { color: c.fg, textAlign: 'center' }]}>No bookings yet</Text>
-          <Text style={[Type.body, { color: c.fgMuted, textAlign: 'center', fontSize: 14 }]}>Book a service and your reference will appear here.</Text>
-          <ThemedButton label="Book Now" onPress={() => router.push('/(tabs)/book')} style={{ alignSelf: 'stretch', marginTop: Spacing.sm }} />
-          {isGuest && <ThemedButton variant="secondary" label="Login / Create Account" onPress={() => router.push('/access' as never)} style={{ alignSelf: 'stretch' }} />}
-        </Card>
+        <>
+          <EmptyState
+            icon="📅"
+            title="No bookings yet"
+            caption="Book a service and your reference will appear here."
+            actionLabel="Book Now"
+            onAction={() => router.push('/(tabs)/book')}
+          />
+          {isGuest && (
+            <ThemedButton variant="secondary" label="Login / Create Account" onPress={() => router.push('/access' as never)} style={{ marginTop: Spacing.sm }} />
+          )}
+        </>
       ) : sections.map((section, sectionIndex) => (
         <View key={section.title}>
           <SectionHeader number={sectionIndex + 1} title={section.title} />
           {section.data.length === 0 ? (
-            <Text style={[Type.caption, { color: c.fgMuted, marginBottom: Spacing.sm }]}>No {section.title.toLowerCase()} bookings.</Text>
+            <EmptyState title={`No ${section.title.toLowerCase()} bookings`} />
           ) : section.data.map((booking, bookingIndex) => (
-            <Animated.View key={booking.reference} entering={entering(bookingIndex)}>
+            <FadeUp key={booking.reference} index={bookingIndex} animate={!hasAnimated.current}>
               <Card style={{ marginBottom: Spacing.md, gap: Spacing.md }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.md }}>
                   <View style={{ flex: 1 }}>
@@ -186,7 +189,7 @@ export default function Schedules() {
                 </View>
 
                 <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                  <Pressable
+                  <PressableScale
                     onPress={() => Linking.openURL('tel:+94771234567')}
                     accessibilityRole="button"
                     style={{
@@ -199,8 +202,8 @@ export default function Schedules() {
                       paddingVertical: Spacing.sm + 2,
                     }}>
                     <Text style={[Type.label, { color: c.fg, fontSize: 13, fontFamily: 'Poppins_600SemiBold' }]}>Call salon</Text>
-                  </Pressable>
-                  <Pressable
+                  </PressableScale>
+                  <PressableScale
                     onPress={() => router.push('/(tabs)/book')}
                     accessibilityRole="button"
                     style={{
@@ -215,10 +218,10 @@ export default function Schedules() {
                     <Text style={[Type.label, { color: c.bg, fontSize: 13, fontFamily: 'Poppins_600SemiBold' }]}>
                       {isGuest ? 'Book again' : 'Reschedule'}
                     </Text>
-                  </Pressable>
+                  </PressableScale>
                 </View>
               </Card>
-            </Animated.View>
+            </FadeUp>
           ))}
         </View>
       ))}

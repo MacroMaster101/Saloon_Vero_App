@@ -3,7 +3,7 @@ import { View, ViewStyle, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/hooks/use-theme';
 
-export function Card({ children, style }: { children: ReactNode; style?: ViewStyle }) {
+export function Card({ children, style, accent = false }: { children: ReactNode; style?: ViewStyle; accent?: boolean }) {
   const { c, Radius, Shadow, Spacing, scheme } = useTheme();
 
   // Destructure layout styles to apply on the outer container, 
@@ -61,7 +61,9 @@ export function Card({ children, style }: { children: ReactNode; style?: ViewSty
           outerStyles, 
           { 
             borderWidth: style?.borderWidth ?? 1,
-            borderColor: style?.borderColor ?? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(28, 26, 23, 0.08)'),
+            borderColor: accent
+              ? c.accent
+              : (style?.borderColor ?? (scheme === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(28, 26, 23, 0.08)')),
             backgroundColor: style?.backgroundColor ?? (scheme === 'dark' ? 'rgba(30, 28, 25, 0.80)' : 'rgba(255, 255, 255, 0.70)'),
             overflow: 'hidden',
           },
@@ -83,7 +85,7 @@ export function Card({ children, style }: { children: ReactNode; style?: ViewSty
         {
           backgroundColor: style?.backgroundColor ?? c.surfaceRaised,
           borderWidth: style?.borderWidth ?? 1,
-          borderColor: style?.borderColor ?? c.line,
+          borderColor: accent ? c.accent : (style?.borderColor ?? c.line),
           padding: Spacing.md,
           ...innerStyles,
         },

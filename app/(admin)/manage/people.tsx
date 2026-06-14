@@ -5,11 +5,12 @@ import { getAllProfiles, getStylistsAdmin, setProfileRole } from '@/lib/api/admi
 import { canEditProfile } from '@/lib/admin/helpers';
 import { useSession } from '@/context/session';
 import { Card } from '@/components/ui/card';
-import { LoadingScreen } from '@/components/ui/loading';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { BackButton } from '@/components/ui/back-button';
 import { SegmentedControl } from '@/components/ui/segmented-control';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { ThemedButton } from '@/components/ui/button';
 import { useTheme } from '@/hooks/use-theme';
 import type { Profile, Stylist } from '@/types/database';
@@ -164,8 +165,6 @@ export default function People() {
     await load();
   };
 
-  if (loading) return <LoadingScreen message="Loading people..." />;
-
   return (
     <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="MANAGE" title="People" left={<BackButton />} />
@@ -175,9 +174,11 @@ export default function People() {
       )}
 
       <View style={{ gap: Spacing.sm }}>
-        {profiles.map((person) => (
+        {loading ? (
+          <SkeletonCard count={4} />
+        ) : profiles.map((person) => (
           <View key={person.id}>
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               onPress={() => setSelectedId((prev) => (prev === person.id ? null : person.id))}
             >
@@ -194,7 +195,7 @@ export default function People() {
                   <RolePill role={person.role} />
                 </View>
               </Card>
-            </Pressable>
+            </PressableScale>
 
             {selectedId === person.id && (
               <View>

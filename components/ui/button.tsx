@@ -1,14 +1,11 @@
-import { Pressable, Text, ViewStyle, StyleSheet, Platform } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Text, ViewStyle, StyleSheet, Platform } from 'react-native';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
 
 type Variant = 'primary' | 'secondary' | 'destructive' | 'social';
 
 export function ThemedButton({ label, onPress, variant = 'primary', busy = false, style }: { label: string; onPress?: () => void; variant?: Variant; busy?: boolean; style?: ViewStyle }) {
   const { c, Radius, Type, Spacing, Shadow, scheme } = useTheme();
-  const scale = useSharedValue(1);
-  const aStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
   const isIOS = Platform.OS === 'ios';
 
   // Premium styling values
@@ -59,39 +56,31 @@ export function ThemedButton({ label, onPress, variant = 'primary', busy = false
         };
 
   return (
-    <Animated.View style={aStyle}>
-      <Pressable
-        disabled={busy}
-        android_ripple={{
-          color: variant === 'primary' ? (scheme === 'dark' ? 'rgba(18, 17, 16, 0.18)' : 'rgba(255, 255, 255, 0.18)') : 'rgba(168, 122, 46, 0.12)',
-          borderless: false,
-        }}
-        onPressIn={() => { scale.value = withTiming(0.96, { duration: 80 }); }}
-        onPressOut={() => { scale.value = withTiming(1, { duration: 120 }); }}
-        onPress={onPress}
-        style={[
-          styles.button,
-          {
-            backgroundColor: bg,
-            borderColor: border,
-            borderRadius: Radius.pill,
-            minHeight: 52,
-            paddingVertical: Spacing.md - 2,
-            paddingHorizontal: Spacing.md,
-            // Android masks bounded ripples with the background drawable; transparent
-            // ghost variants get a square ripple unless we clip to the pill shape.
-            // (These variants carry no elevation, so overflow:hidden costs nothing.)
-            overflow: bg === 'transparent' ? 'hidden' : undefined,
-          },
-          shadowStyle,
-          style
-        ]}
-      >
-        <Text style={[Type.button, { color: fg, fontSize: 15, letterSpacing: 0.5 }]}>
-          {busy ? '…' : label}
-        </Text>
-      </Pressable>
-    </Animated.View>
+    <PressableScale
+      disabled={busy}
+      onPress={onPress}
+      rippleColor={variant === 'primary'
+        ? (scheme === 'dark' ? 'rgba(18, 17, 16, 0.18)' : 'rgba(255, 255, 255, 0.18)')
+        : 'rgba(168, 122, 46, 0.12)'}
+      style={[
+        styles.button,
+        {
+          backgroundColor: bg,
+          borderColor: border,
+          borderRadius: Radius.pill,
+          minHeight: 52,
+          paddingVertical: Spacing.md - 2,
+          paddingHorizontal: Spacing.md,
+          overflow: bg === 'transparent' ? 'hidden' : undefined,
+        },
+        shadowStyle,
+        style,
+      ]}
+    >
+      <Text style={[Type.button, { color: fg, fontSize: 15, letterSpacing: 0.5 }]}>
+        {busy ? '…' : label}
+      </Text>
+    </PressableScale>
   );
 }
 

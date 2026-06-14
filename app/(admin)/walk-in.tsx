@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import { getBookableServices } from '@/lib/api/queries';
 import { ServiceCard } from '@/components/services/service-card';
-import { LoadingScreen } from '@/components/ui/loading';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { BackButton } from '@/components/ui/back-button';
@@ -19,18 +19,20 @@ export default function WalkIn() {
     });
   }, []);
 
-  if (loading) return <LoadingScreen message="Loading services..." />;
-
   return (
     <ScreenContainer safeTop={false}>
       <ScreenHeader eyebrow="WALK-IN" title="New booking" subtitle="Pick a service to start" left={<BackButton />} />
-      {services.map((service) => (
-        <ServiceCard
-          key={service.id}
-          service={service}
-          onPress={() => router.push(`/booking/${service.id}` as never)}
-        />
-      ))}
+      {loading ? (
+        <SkeletonCard count={4} />
+      ) : (
+        services.map((service) => (
+          <ServiceCard
+            key={service.id}
+            service={service}
+            onPress={() => router.push(`/booking/${service.id}` as never)}
+          />
+        ))
+      )}
     </ScreenContainer>
   );
 }

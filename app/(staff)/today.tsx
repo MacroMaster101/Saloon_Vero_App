@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshControl, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
 import { getMyAssignedBookings, setBookingStatus } from '@/lib/api/staff';
 import type { StaffBooking, AdminBookingStatus } from '@/lib/api/staff';
@@ -8,7 +7,9 @@ import { applyStatus, colomboDayWindow, nextUp, serviceLabel } from '@/lib/staff
 import { getServices } from '@/lib/api/queries';
 import { useSession } from '@/context/session';
 import { Card } from '@/components/ui/card';
-import { LoadingScreen } from '@/components/ui/loading';
+import { EmptyState } from '@/components/ui/empty-state';
+import { FadeUp } from '@/components/ui/fade-up';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SectionHeader } from '@/components/ui/section-header';
@@ -66,9 +67,6 @@ export default function Today() {
     if (!initialLoading) hasAnimated.current = true;
   }, [initialLoading]);
 
-  const entering = (i: number) =>
-    hasAnimated.current ? undefined : FadeInDown.delay(i * 60).duration(380);
-
   const handleSetStatus = async (id: string, status: AdminBookingStatus) => {
     const prev = bookings;
     setBookings(applyStatus(bookings, id, status));
@@ -81,7 +79,13 @@ export default function Today() {
     }
   };
 
-  if (initialLoading) return <LoadingScreen message="Loading your day..." />;
+  if (initialLoading) {
+    return (
+      <ScreenContainer safeTop={false}>
+        <SkeletonCard count={4} />
+      </ScreenContainer>
+    );
+  }
 
   const now = new Date().toISOString();
   const nextBooking = nextUp(bookings, now);
@@ -110,7 +114,7 @@ export default function Today() {
 
       <SectionHeader number={1} eyebrow="Next" title="Next up" />
       {nextBooking ? (
-        <Card style={{ borderColor: c.accent, marginBottom: Spacing.md }}>
+        <Card accent style={{ marginBottom: Spacing.md }}>
           <Text style={[Type.caption, { color: c.fgMuted }]}>
             {timeFmt.format(new Date(nextBooking.starts_at))} – {timeFmt.format(new Date(nextBooking.ends_at))}
           </Text>
@@ -130,21 +134,17 @@ export default function Today() {
       <SectionHeader number={2} eyebrow="All day" title="Appointments" />
 
       {bookings.length === 0 ? (
-        <Card>
-          <Text style={[Type.caption, { color: c.fgMuted }]}>
-            No appointments today — enjoy the quiet ☕
-          </Text>
-        </Card>
+        <EmptyState title="No appointments today — enjoy the quiet ☕" />
       ) : (
         <View>
           {bookings.map((booking, i) => (
-            <Animated.View key={booking.id} entering={entering(i)}>
+            <FadeUp key={booking.id} index={i} animate={!hasAnimated.current}>
               <StaffBookingCard
                 booking={booking}
                 serviceName={serviceLabel(services, booking.service_id)}
                 onSetStatus={handleSetStatus}
               />
-            </Animated.View>
+            </FadeUp>
           ))}
         </View>
       )}
