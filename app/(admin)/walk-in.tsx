@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { getServices, getStylists } from '@/lib/api/queries';
-import { getAvailability, createBooking } from '@/lib/api/edge';
+import { getAvailability, createBooking, type SlotEntry } from '@/lib/api/edge';
 import { Card } from '@/components/ui/card';
 import { LoadingScreen } from '@/components/ui/loading';
 import { ScreenContainer } from '@/components/ui/screen';
@@ -10,6 +10,7 @@ import { ScreenHeader } from '@/components/ui/screen-header';
 import { ThemedTextInput } from '@/components/ui/text-input';
 import { ThemedButton } from '@/components/ui/button';
 import { AdminChip, AdminSectionLabel } from '@/components/admin/admin-ui';
+import { SlotPicker } from '@/components/booking/slot-picker';
 import { useTheme } from '@/hooks/use-theme';
 import { money } from '@/lib/utils/format';
 import type { Service, Stylist } from '@/types/database';
@@ -50,7 +51,7 @@ export default function WalkInDesk() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   // Slots availability
-  const [slots, setSlots] = useState<string[]>([]);
+  const [slots, setSlots] = useState<SlotEntry[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -147,9 +148,9 @@ export default function WalkInDesk() {
       <View style={{ gap: Spacing.md }}>
         <Card style={{ gap: Spacing.sm }}>
           <AdminSectionLabel>Customer Details</AdminSectionLabel>
-          <ThemedTextInput label="Customer Name" placeholder="e.g. Kavisha Lakshan" value={name} onChangeText={setName} style={{ marginBottom: Spacing.xs }} />
-          <ThemedTextInput label="Mobile Number" placeholder="e.g. 0771234567" keyboardType="phone-pad" value={phone} onChangeText={setPhone} style={{ marginBottom: Spacing.xs }} />
-          <ThemedTextInput label="Email (optional)" placeholder="e.g. kavisha@domain.com" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} style={{ marginBottom: Spacing.xs }} />
+          <ThemedTextInput required label="Customer Name" placeholder="e.g. Amal Perera" value={name} onChangeText={setName} style={{ marginBottom: Spacing.xs }} />
+          <ThemedTextInput required label="Mobile Number" placeholder="e.g. 0712345678" keyboardType="phone-pad" value={phone} onChangeText={setPhone} style={{ marginBottom: Spacing.xs }} />
+          <ThemedTextInput label="Email (optional)" placeholder="e.g. amal@example.com" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} style={{ marginBottom: Spacing.xs }} />
         </Card>
 
         <Card style={{ gap: Spacing.sm }}>
@@ -224,19 +225,11 @@ export default function WalkInDesk() {
               No active hours or chairs available for this date.
             </Text>
           ) : (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs }}>
-              {slots.map((t) => {
-                return (
-                  <AdminChip
-                    key={t}
-                    label={t}
-                    selected={selectedTime === t}
-                    onPress={() => setSelectedTime(t)}
-                    tone="neutral"
-                  />
-                );
-              })}
-            </View>
+            <SlotPicker
+              slots={slots}
+              selected={selectedTime}
+              onSelect={(t) => setSelectedTime(t)}
+            />
           )}
 
           <View style={{ borderTopWidth: 1, borderTopColor: c.hairline, paddingTop: Spacing.sm, marginTop: Spacing.xs }}>

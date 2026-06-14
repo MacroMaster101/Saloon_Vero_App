@@ -12,7 +12,7 @@ export function statusColor(status: string, c: Palette): string {
   }
 }
 
-export function StatusTag({ status }: { status: string }) {
+export function StatusTag({ status, style }: { status: string; style?: any }) {
   const { c, Radius, Type, scheme } = useTheme();
   const color = statusColor(status, c);
   
@@ -28,7 +28,7 @@ export function StatusTag({ status }: { status: string }) {
   }
 
   return (
-    <View style={{ 
+    <View style={[{ 
       borderRadius: Radius.pill, 
       borderWidth: 1, 
       borderColor: color, 
@@ -36,7 +36,7 @@ export function StatusTag({ status }: { status: string }) {
       paddingHorizontal: 14,
       paddingVertical: 5,
       alignSelf: 'flex-start'
-    }}>
+    }, style]}>
       <Text style={[Type.caption, { color, textTransform: 'capitalize', fontFamily: 'Poppins_600SemiBold', fontSize: 11 }]}>
         {status.replace('_', ' ')}
       </Text>

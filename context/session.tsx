@@ -37,6 +37,29 @@ const Ctx = createContext<SessionState>({
   signOut: async () => {},
 });
 
+async function migrateGuestBookings(userId: string) {
+  try {
+    const raw = await AsyncStorage.getItem('saloon_vero_guest_bookings');
+    if (!raw) return;
+    const bookings = JSON.parse(raw);
+    if (!Array.isArray(bookings) || bookings.length === 0) return;
+
+    const references = bookings.map((b: any) => b.reference).filter(Boolean);
+    if (references.length === 0) return;
+
+    const { error } = await (supabase as any).rpc('claim_bookings', { p_booking_references: references });
+    if (error) {
+      console.error('Failed to claim guest bookings:', error);
+      return;
+    }
+
+    // Success! Clear guest bookings from local storage
+    await AsyncStorage.removeItem('saloon_vero_guest_bookings');
+  } catch (err) {
+    console.error('Error migrating guest bookings:', err);
+  }
+}
+
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isGuest, setIsGuest] = useState(false);
@@ -54,6 +77,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       setIsGuest(!data.session && guest === 'true');
       setLoading(false);
+      if (data.session) {
+        migrateGuestBookings(data.session.user.id);
+      }
     });
     const { data: sub } = supabase.auth.onAuthStateChange(async (event, s) => {
       setSession(s);
@@ -68,6 +94,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (s) {
         await AsyncStorage.removeItem(GUEST_MODE_KEY);
         setIsGuest(false);
+        await migrateGuestBookings(s.user.id);
       }
     });
     return () => {

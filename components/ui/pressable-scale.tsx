@@ -27,14 +27,14 @@ export function PressableScale({
   const {
     margin, marginHorizontal, marginVertical, marginTop, marginBottom, marginLeft, marginRight,
     width, height, flex, alignSelf, position, top, bottom, left, right, zIndex,
-    flexGrow, flexShrink, flexBasis,
+    flexGrow, flexShrink, flexBasis, aspectRatio,
     ...innerStyle
   } = flattened;
 
   const outerStyle = {
     margin, marginHorizontal, marginVertical, marginTop, marginBottom, marginLeft, marginRight,
     width, height, flex, alignSelf, position, top, bottom, left, right, zIndex,
-    flexGrow, flexShrink, flexBasis,
+    flexGrow, flexShrink, flexBasis, aspectRatio,
   };
 
   return (
@@ -45,7 +45,12 @@ export function PressableScale({
         onPressIn={() => { scale.value = withSpring(to, { damping: 18, stiffness: 320 }); }}
         onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 320 }); }}
         onPress={onPress}
-        style={[{ minHeight: Layout.touchMin, justifyContent: 'center' }, innerStyle]}
+        style={[
+          { minHeight: Layout.touchMin, justifyContent: 'center' },
+          width !== undefined || flex !== undefined ? { width: '100%' } : undefined,
+          height !== undefined || aspectRatio !== undefined || flex !== undefined ? { height: '100%' } : undefined,
+          innerStyle,
+        ]}
         {...rest}
       >
         {children}

@@ -33,6 +33,7 @@ const MAPPING = {
   'eye': 'visibility',
   'eye.slash': 'visibility-off',
   'plus.circle.fill': 'add-circle',
+  'plus': 'add',
   'ellipsis.circle.fill': 'more-horiz',
   'trash.fill': 'delete',
   'magnifyingglass': 'search',

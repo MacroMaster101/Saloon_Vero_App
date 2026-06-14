@@ -8,8 +8,9 @@ export function ThemedTextInput({
   error,
   style,
   secureToggle,
+  required,
   ...props
-}: TextInputProps & { label?: string; error?: string; secureToggle?: boolean }) {
+}: TextInputProps & { label?: string; error?: string; secureToggle?: boolean; required?: boolean }) {
   const { c, Radius, Type, Spacing, scheme } = useTheme();
   const [focused, setFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
@@ -59,7 +60,12 @@ export function ThemedTextInput({
 
   return (
     <View style={{ marginBottom: Spacing.md }}>
-      {!!label && <Text style={[Type.label, { color: c.fgMuted, marginBottom: 6, fontSize: 12 }]}>{label}</Text>}
+      {!!label && (
+        <Text style={[Type.label, { color: c.fgMuted, marginBottom: 6, fontSize: 12 }]}>
+          {label}
+          {required && <Text style={{ color: c.error }}> *</Text>}
+        </Text>
+      )}
       {secureToggle ? (
         <View style={{ position: 'relative' }}>
           {inputElement}
