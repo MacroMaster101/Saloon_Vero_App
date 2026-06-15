@@ -1,6 +1,6 @@
-# Saloon Vero — Customer Mobile App 💇‍♂️✨📱
+# Saloon Vero — Salon Booking App 💇‍♂️✨📱
 
-A premium **React Native + Expo SDK 54 + TypeScript** customer-facing mobile application designed for **Saloon Vero**. Seamlessly connected to a shared **Supabase** backend, this app brings real-time booking, user profiles, Google authentication, and gorgeous styling details to clients' fingertips.
+A premium **React Native + Expo SDK 54 + TypeScript** mobile application for **Saloon Vero**, serving **customers, stylists, and admins** from a single codebase with role-based experiences. Connected to a shared **Supabase** backend, the app brings real-time booking, stylist reviews & ratings, role dashboards, Google authentication, and gorgeous styling details to everyone's fingertips.
 
 ---
 
@@ -37,9 +37,15 @@ A premium **React Native + Expo SDK 54 + TypeScript** customer-facing mobile app
 
 ## 🚀 Key Features
 
+*   **👥 Role-Based Experiences (Customer · Staff · Admin):**
+    *   🙋 **Customers** browse, book, manage their schedules, and review stylists.
+    *   ✂️ **Staff (stylists)** get their own area: today's chair, weekly schedule, booking status actions (complete / no-show / cancel), and a "My Reviews" view with engagement stats.
+    *   🛠️ **Admins** get a full management dashboard plus a walk-in booking desk.
+    *   🧭 The correct area is resolved automatically from the signed-in user's profile role at the navigation layer (see `lib/auth/routing.ts`), with route guards in each group's `_layout.tsx`.
 *   **🔐 Secure Authentication & Auto-Migration:**
-    *   📧 Email and Password signup/login (Supabase Auth).
+    *   📧 Email and Password signup/login with **in-app 6-digit OTP** verification (Supabase Auth).
     *   🌐 **"Continue with Google"** OAuth integration via `expo-auth-session` and `expo-web-browser`, returning to the app through the `saloonveroapp://auth/callback` deep link.
+    *   🔑 **Password reset** via emailed OTP code, then in-app new-password entry.
     *   🕶️ **Guest mode:** Browse services and book without an account. Bookings are kept locally in `AsyncStorage` and automatically claimed and merged into the user's account upon sign-up or login.
 *   **🎨 Aesthetics & Theming ("Warm Luxe"):**
     *   🌗 Curated light and dark brand modes driven automatically by the device's system settings.
@@ -51,24 +57,36 @@ A premium **React Native + Expo SDK 54 + TypeScript** customer-facing mobile app
     *   📋 **Schedules tab** displaying upcoming and past bookings styled as receipt-style records, with vertical left color status strips (gold for upcoming, green for completed, red for cancelled), ticket badges for reference codes, and flexible action rows.
     *   🔄 **Reschedule upcoming bookings**: Select a new date and time directly from the schedules list (available to both logged-in users and guests).
     *   ❌ **Cancel upcoming bookings**: Cancel bookings with simple confirmation prompts. Authenticated users verify via JWT, while guests verify via phone number ownership checks.
-*   **🛠️ Admin Customization Dashboard:**
+*   **⭐ Stylist Reviews & Ratings:**
+    *   📝 Customers leave star ratings and written reviews for stylists from the home screen and the booking flow; a stylist's running average rating is recomputed via a single shared helper (`lib/utils/reviews.ts`).
+    *   ❤️ **Engagement:** like/heart and report reviews, with per-device state persisted in `AsyncStorage` and optimistic UI that rolls back on failure.
+    *   🛡️ **Admin moderation:** a dedicated admin Reviews screen lists all reviews, filters by stylist, surfaces report counts, and supports deletion (which re-derives the affected stylist's rating).
+    *   🧰 Graceful fallbacks: when the database is unseeded or unreachable, screens fall back to local datasets so the UI never breaks.
+*   **🛠️ Admin Dashboard:**
+    *   📊 **Today** overview with revenue, completion %, capacity and the next booking.
+    *   🚶 **Walk-in desk** to create bookings on behalf of customers.
+    *   📋 **Bookings** management (search, filter by status/stylist, cancel).
+    *   🧑‍🤝‍🧑 **People** screen to manage user roles and link staff accounts to stylist profiles.
     *   🖼️ Manage services, stylists, lookbook gallery items, and blocked slots directly in-app.
-    *   📷 **Custom Photo URL Uploads**: Admins can enter custom headshot links for stylists or custom image links for services in the edit forms, dynamically updating visual assets across customer lists in real-time.
-    *   ➕ **Bottom Floating Action Buttons (FABs)**: Quick actions float cleanly above list views, automatically accounting for safe-area layout heights on iOS and Android.
+    *   📷 **Custom Photo Uploads**: upload headshots/service images (stored in Supabase Storage with the correct MIME type) or paste custom URLs, updating customer-facing lists in real time.
+    *   ➕ **Bottom Floating Action Buttons (FABs)**: quick actions float cleanly above list views, automatically accounting for safe-area layout heights on iOS and Android.
 *   **👤 User Profile Dashboard:**
     *   🖼️ Profile manager: edit name, phone number, and upload custom avatars directly to Supabase Storage (falls back to email-derived DiceBear avatars if un-configured).
+    *   🌗 **Theme preference** (light / dark / system) persisted across sessions.
     *   ✨ **New Things tab** highlighting fresh services and salon updates.
 
 ---
 
 ## 🧠 Architecture
 
-*   **🧭 Expo Router Navigation:** The app uses Expo Router's file-based routing through the root `app/` directory, with grouped routes for auth, tabs, and booking flows.
-*   **🛡️ Direct Database Access (Governed by RLS):** Public data (services, stylists, gallery, business hours) and authenticated user records (bookings, profiles) are fetched directly using the anonymous Supabase client key, protected by Row Level Security (RLS) policies.
-*   **⚡ Secure Edge Functions:** Operations requiring the Supabase `service-role` key—specifically, computing stylist availability and reserving appointments safely without double-bookings—are delegated to two serverless Supabase Edge Functions:
+*   **🧭 Expo Router Navigation:** The app uses Expo Router's file-based routing through the root `app/` directory, with grouped routes for auth, customer tabs, staff, admin, and booking flows. The signed-in user's role determines which group they land in, enforced by guards in each group's `_layout.tsx`.
+*   **🛡️ Direct Database Access (Governed by RLS):** Public data (services, stylists, gallery, business hours, reviews) and authenticated user records (bookings, profiles) are fetched directly using the anonymous Supabase client key, protected by Row Level Security (RLS) policies.
+*   **⚡ Secure Edge Functions:** Operations requiring the Supabase `service-role` key—computing availability and mutating appointments safely without double-bookings—are delegated to serverless Supabase Edge Functions:
     *   `get-availability` — Checks real-time schedules, including shop business hours, active stylists, confirmed bookings, and blocked slots.
     *   `create-booking` — Validates client forms, guards against double-booking race conditions, inserts rows, and issues confirmation references.
-*   **🧩 Feature-Oriented Organization:** Shared UI, booking logic, API wrappers, auth helpers, validation schemas, and database types are separated into focused folders so the app is easy to extend.
+    *   `reschedule-booking` — Moves an existing booking to a new date/time with the same conflict guarding.
+    *   `cancel-booking` — Cancels a booking, verifying ownership (JWT for users, phone match for guests).
+*   **🧩 Feature-Oriented Organization:** Shared UI, booking logic, API wrappers (per role), auth helpers, review utilities, business constants, validation schemas, and database types are separated into focused folders so the app is easy to extend.
 
 ---
 
@@ -80,9 +98,12 @@ Saloon_Vero_App/
     _layout.tsx                # ⚙️ Global providers, fonts, splash handling, route setup
     index.tsx                  # ✨ Branded splash/onboarding entry screen
     access.tsx                 # 🚪 Sign-in / guest-mode gateway screen
-    (auth)/                    # 🔐 Auth stack: login and signup
-    (tabs)/                    # 📱 Main bottom tabs: Home, New Things, Book, Schedules, Account
-    auth/callback.tsx          # 🌐 Google OAuth deep-link callback handler
+    (auth)/                    # 🔐 Auth stack: login, signup, forgot-password (OTP)
+    (tabs)/                    # 📱 Customer bottom tabs: Home, New Things, Book, Schedules, Account
+    (staff)/                   # ✂️ Staff area: today, weekly schedule, account, my reviews
+    (admin)/                   # 🛠️ Admin area: today, bookings, walk-in, and a `more/` hub
+      more/                    #     ↳ services, stylists, gallery, blocked-slots, people, reviews
+    auth/                      # 🌐 OAuth callback + password-reset routes
     booking/                   # 📅 Booking flow routes
       [serviceId].tsx          # 🪄 Stepped booking wizard
       success.tsx              # 🎉 Booking confirmation screen
@@ -91,29 +112,37 @@ Saloon_Vero_App/
 
   components/                  # 🧩 Reusable React Native components
     ui/                        # 💅 Warm Luxe UI primitives: buttons, cards, inputs, loaders
+    admin/                     # 🛠️ Admin-specific UI (photo picker, dashboard primitives)
+    staff/                     # ✂️ Staff-specific UI (booking cards, metrics)
     auth/                      # 🕶️ Auth-related UI such as the guest-mode header
     booking/                   # 📅 Booking-specific UI such as SlotPicker
     services/                  # ✂️ Service presentation components
     stylists/                  # 👤 Stylist presentation components
+    reviews/                   # ⭐ Shared review UI (e.g. StarRow)
 
   config/                      # 🔧 Environment and app configuration helpers
     env.ts                     # 🔑 EXPO_PUBLIC_* environment reader
 
   constants/                   # 🎨 Brand constants and design tokens
     theme.ts                   # 🌗 Colors, spacing, radius, shadows, typography
+    salon.ts                   # 🏪 Business config: salon phone, Poya holiday calendar
 
   context/                     # 🧠 React providers for app-wide state
     session.tsx                # 🔐 Supabase session provider and auth state
+    theme.tsx                  # 🌗 Theme preference (light/dark/system) provider
 
   hooks/                       # 🪝 Shared custom hooks
     use-theme.ts               # 🌗 Theme token access by color scheme
+    use-countdown.ts           # ⏱️ Resend-code cooldown timer
 
   lib/                         # 🧰 App logic separated by responsibility
-    api/                       # ⚡ Supabase client, direct queries, Edge Function wrappers
-    auth/                      # 🌐 Google OAuth flow helpers
+    api/                       # ⚡ Supabase client, queries, admin/staff APIs, Edge wrappers
+    admin/                     # 🛠️ Admin helpers (slugify, stats, profile rules)
+    auth/                      # 🌐 Google OAuth, routing, signup/error helpers
     booking/                   # 📆 Booking reducer and availability calculations
+    staff/                     # ✂️ Staff bookings grouping/view helpers
     storage/                   # 🕶️ Local guest-booking persistence (AsyncStorage)
-    utils/                     # 🕒 Formatters, references, avatar helpers, time utilities
+    utils/                     # 🕒 Formatters, references, avatar, time & review helpers
     validation/                # ✅ Zod schemas for booking and customer details
 
   types/                       # 🧾 Shared TypeScript/domain types
@@ -174,7 +203,7 @@ In the Supabase dashboard under **Authentication → URL Configuration**, add th
 
 ## 🧪 Testing
 
-The codebase includes an automated test suite containing **116 tests across 35 suites**, covering state transitions, availability logic, Google OAuth redirect handling, environment validation, onboarding behavior, and custom UI components (buttons, cards, loaders, skeletons, empty states, and entrance/press animations).
+The codebase includes an automated test suite containing **128 tests across 38 suites**, covering state transitions, availability logic, Google OAuth redirect handling, environment validation, onboarding behavior, staff status actions, admin/people role guards, and custom UI components (buttons, cards, loaders, skeletons, empty states, and entrance/press animations).
 
 > ℹ️ The `__tests__/` folder is **git-ignored and kept local-only** — it is not uploaded to GitHub. The tests still run on your machine for local verification.
 
@@ -189,32 +218,3 @@ npm run lint
 npm test -- --runInBand
 npx tsc --noEmit
 ```
-
----
-
-## 🧼 GitHub Upload Notes
-
-This project is ready to upload with source files, configuration, and safe placeholders committed. The Jest test suite is kept local-only (git-ignored) and is not uploaded.
-
-Ignored local-only files include:
-
-```text
-.env
-.expo/
-node_modules/
-.vscode/
-.claude/
-.codex/
-.agents/
-AGENTS.md
-CLAUDE.md
-docs/
-__tests__/
-expo-env.d.ts
-dist/
-web-build/
-ios/
-android/
-```
-
-Keep `.env.example` committed so new developers know which environment variables are required, but never commit the real `.env` file. 🔐

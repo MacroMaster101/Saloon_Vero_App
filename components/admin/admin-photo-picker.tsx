@@ -20,7 +20,7 @@ export function AdminPhotoPicker({
   bucketName: 'avatars' | 'gallery';
   uploadPath: string;
 }) {
-  const { c, Radius, Spacing, Type } = useTheme();
+  const { c, Spacing, Type } = useTheme();
   const [uploading, setUploading] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
 

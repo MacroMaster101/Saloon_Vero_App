@@ -25,8 +25,10 @@ type MenuItem = {
 
 const SALON_ITEMS: MenuItem[] = [
   { icon: 'tag.fill', title: 'Services', caption: 'Prices, categories, and duration', route: '/(admin)/more/services', tone: 'accent' },
+  { icon: 'star.fill', title: 'Customer Reviews', caption: 'Browse & moderate stylist feedback', route: '/(admin)/more/reviews', tone: 'accent' },
   { icon: 'photo.fill', title: 'Gallery & Lookbook', caption: 'Configure salon portfolio photos', route: '/(admin)/more/gallery', tone: 'neutral' },
 ];
+
 
 const STAFF_ITEMS: MenuItem[] = [
   { icon: 'person.fill', title: 'Stylists & Chairs', caption: 'Team members, roles, and skills', route: '/(admin)/more/stylists', tone: 'accent' },

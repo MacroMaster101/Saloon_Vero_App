@@ -3,7 +3,7 @@
  * Using aesthetic, high-resolution Unsplash assets to simulate professionally generated photography.
  */
 const SERVICE_IMAGES: Record<string, string> = {
-  'gents-cut': 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=500&auto=format&fit=crop&q=80',
+  'gents-cut': 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=500&auto=format&fit=crop&q=80',
   'ladies-cut': 'https://images.unsplash.com/photo-1562322140-8baeececf3df?w=500&auto=format&fit=crop&q=80',
   'colour-roots': 'https://images.unsplash.com/photo-1620331311520-246422fd82f9?w=500&auto=format&fit=crop&q=80',
   'colour-full': 'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=500&auto=format&fit=crop&q=80',

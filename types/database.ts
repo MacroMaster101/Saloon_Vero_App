@@ -28,6 +28,7 @@ export interface Database {
           bookable: boolean;
           sort_order: number;
           is_active: boolean;
+          is_featured: boolean;
         };
         Insert: {
           id?: string;
@@ -41,6 +42,7 @@ export interface Database {
           bookable?: boolean;
           sort_order?: number;
           is_active?: boolean;
+          is_featured?: boolean;
         };
         Update: Partial<Database['public']['Tables']['services']['Insert']>;
         Relationships: [];
@@ -55,6 +57,8 @@ export interface Database {
           avatar_url: string | null;
           sort_order: number;
           is_active: boolean;
+          rating?: number | null;
+          rating_count?: number | null;
         };
         Insert: {
           id?: string;
@@ -65,6 +69,8 @@ export interface Database {
           avatar_url?: string | null;
           sort_order?: number;
           is_active?: boolean;
+          rating?: number | null;
+          rating_count?: number | null;
         };
         Update: Partial<Database['public']['Tables']['stylists']['Insert']>;
         Relationships: [];
@@ -218,11 +224,44 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['site_content']['Insert']>;
         Relationships: [];
       };
+      stylist_reviews: {
+        Row: {
+          id: string;
+          stylist_id: string;
+          customer_name: string;
+          rating: number;
+          comment: string;
+          created_at: string;
+          likes_count: number;
+          reports_count: number;
+        };
+        Insert: {
+          id?: string;
+          stylist_id: string;
+          customer_name: string;
+          rating: number;
+          comment: string;
+          created_at?: string;
+          likes_count?: number;
+          reports_count?: number;
+        };
+        Update: Partial<Database['public']['Tables']['stylist_reviews']['Insert']>;
+        Relationships: [
+          {
+            foreignKeyName: 'stylist_reviews_stylist_id_fkey';
+            columns: ['stylist_id'];
+            referencedRelation: 'stylists';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
     };
     Views: Record<never, never>;
     Functions: {
       anonymize_user_bookings: { Args: { target: string }; Returns: undefined };
       purge_old_bookings: { Args: { older_than_months?: number }; Returns: number };
+      toggle_review_like: { Args: { p_review_id: string; p_delta: number }; Returns: undefined };
+      report_review: { Args: { p_review_id: string }; Returns: undefined };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
@@ -238,3 +277,4 @@ export type BlockedSlot = Database['public']['Tables']['blocked_slots']['Row'];
 export type Booking = Database['public']['Tables']['bookings']['Row'];
 export type GalleryItem = Database['public']['Tables']['gallery']['Row'];
 export type Profile = Database['public']['Tables']['profiles']['Row'];
+export type StylistReview = Database['public']['Tables']['stylist_reviews']['Row'];

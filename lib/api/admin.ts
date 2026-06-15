@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/api/supabase';
 import type { StaffBooking } from '@/lib/api/staff';
-import type { Service, Stylist, GalleryItem, Profile } from '@/types/database';
+import type { Service, Stylist, GalleryItem, Profile, StylistReview } from '@/types/database';
 
 export type AdminBooking = StaffBooking & { stylist_id: string | null };
 
@@ -91,3 +91,48 @@ export async function deleteBooking(id: string): Promise<Result> {
   return toResult(error);
 }
 
+// ── Review admin functions ──────────────────────────────────────────────────
+
+export type AdminReview = StylistReview & { stylist_name: string };
+
+export async function getReviewsAdmin(stylistId?: string): Promise<AdminReview[]> {
+  let query = supabase
+    .from('stylist_reviews')
+    .select('*, stylists(name)')
+    .order('created_at', { ascending: false });
+  if (stylistId) {
+    query = query.eq('stylist_id', stylistId);
+  }
+  const { data } = await query;
+  if (!data) return [];
+  return data.map((row: any) => ({
+    ...row,
+    stylist_name: row.stylists?.name ?? 'Unknown',
+  })) as AdminReview[];
+}
+
+export async function deleteReview(reviewId: string, stylistId: string): Promise<Result> {
+  const { error } = await supabase.from('stylist_reviews').delete().eq('id', reviewId);
+  if (error) return { error: error.message };
+
+  // Recalculate stylist average rating after deletion
+  const { data: remaining } = await supabase
+    .from('stylist_reviews')
+    .select('rating')
+    .eq('stylist_id', stylistId);
+
+  if (remaining && remaining.length > 0) {
+    const avg = remaining.reduce((sum: number, r: any) => sum + r.rating, 0) / remaining.length;
+    await supabase
+      .from('stylists')
+      .update({ rating: Number(avg.toFixed(2)), rating_count: remaining.length })
+      .eq('id', stylistId);
+  } else {
+    await supabase
+      .from('stylists')
+      .update({ rating: null, rating_count: 0 })
+      .eq('id', stylistId);
+  }
+
+  return { ok: true };
+}

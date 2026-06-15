@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Alert, Switch, Text, View, ScrollView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { tabBarBottomGap } from '@/constants/theme';
 import { useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import { getStylistAvatar } from '@/components/stylists/stylist-card';
@@ -19,6 +18,7 @@ import { ThemedButton } from '@/components/ui/button';
 import { ThemedTextInput } from '@/components/ui/text-input';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useTheme } from '@/hooks/use-theme';
+import { DEFAULT_RATING, DEFAULT_RATING_COUNT } from '@/lib/utils/reviews';
 import type { Stylist } from '@/types/database';
 
 export default function Stylists() {
@@ -45,6 +45,8 @@ export default function Stylists() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [tagsText, setTagsText] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [rating, setRating] = useState('4.9');
+  const [ratingCount, setRatingCount] = useState('42');
 
   const load = useCallback(async () => {
     const rows = await getStylistsAdmin();
@@ -57,16 +59,31 @@ export default function Stylists() {
   const resetForm = () => {
     setName(''); setRole(''); setTagsText(''); setIsActive(true); setError(null);
     setAvatarUrl('');
+    setRating('4.9');
+    setRatingCount('42');
   };
 
   const seedForm = (s: Stylist) => {
     setName(s.name); setRole(s.role); setTagsText(s.tags.join(', '));
     setIsActive(s.is_active); setError(null);
     setAvatarUrl(s.avatar_url || '');
+    setRating(String(s.rating ?? DEFAULT_RATING));
+    setRatingCount(String(s.rating_count ?? DEFAULT_RATING_COUNT));
   };
 
   const handleSave = async () => {
     if (!name.trim()) { setError('Name is required.'); return; }
+
+    const parsedRating = parseFloat(rating);
+    if (isNaN(parsedRating) || parsedRating < 0 || parsedRating > 5) {
+      setError('Rating must be a number between 0 and 5.');
+      return;
+    }
+    const parsedCount = parseInt(ratingCount, 10);
+    if (isNaN(parsedCount) || parsedCount < 0) {
+      setError('Rating count must be a non-negative integer.');
+      return;
+    }
 
     const tags = tagsText.split(',').map((t) => t.trim()).filter(Boolean);
     const row = {
@@ -78,6 +95,8 @@ export default function Stylists() {
       tags,
       is_active: isActive,
       avatar_url: avatarUrl.trim() || null,
+      rating: parsedRating,
+      rating_count: parsedCount,
     };
 
     setSaving(true);
@@ -150,6 +169,27 @@ export default function Stylists() {
             onChangeText={setTagsText}
             placeholder="e.g. Cuts, Fades, Color"
           />
+
+          <View style={{ flexDirection: 'row', gap: Spacing.md }}>
+            <View style={{ flex: 1 }}>
+              <ThemedTextInput
+                label="Rating (0.0 - 5.0)"
+                value={rating}
+                onChangeText={setRating}
+                keyboardType="numeric"
+                placeholder="e.g. 4.9"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <ThemedTextInput
+                label="Rating Count (Reviews)"
+                value={ratingCount}
+                onChangeText={setRatingCount}
+                keyboardType="number-pad"
+                placeholder="e.g. 42"
+              />
+            </View>
+          </View>
 
           <View
             style={{
@@ -247,7 +287,12 @@ export default function Stylists() {
                       />
 
                       <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold' }]}>{stylist.name}</Text>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginRight: Spacing.md }}>
+                          <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_600SemiBold' }]}>{stylist.name}</Text>
+                          <Text style={{ fontSize: 12, color: '#D9A648', fontFamily: 'Poppins_700Bold' }}>
+                            ★ {stylist.rating ? Number(stylist.rating).toFixed(1) : DEFAULT_RATING} ({stylist.rating_count ?? DEFAULT_RATING_COUNT})
+                          </Text>
+                        </View>
                         {!!stylist.role && (
                           <Text style={[Type.caption, { color: c.fgMuted, fontFamily: 'Poppins_500Medium' }]}>{stylist.role}</Text>
                         )}
