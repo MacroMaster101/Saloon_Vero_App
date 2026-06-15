@@ -47,6 +47,9 @@ const MAPPING = {
   'photo.fill': 'photo',
   'lock.fill': 'lock',
   'slider.horizontal.3': 'tune',
+  'bubble.left.fill': 'chat',
+  'star.fill': 'star',
+  'exclamationmark.triangle.fill': 'warning',
 } satisfies IconMapping;
 
 /**

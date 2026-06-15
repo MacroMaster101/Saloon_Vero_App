@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, Switch, Text, View, ScrollView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { tabBarBottomGap } from '@/constants/theme';
 import { useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';

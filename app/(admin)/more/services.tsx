@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Alert, Switch, Text, View, ScrollView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { tabBarBottomGap } from '@/constants/theme';
 import { useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import { getServiceImage } from '@/lib/utils/service-image';
@@ -51,6 +50,7 @@ export default function Services() {
   const [category, setCategory] = useState<'hair' | 'beauty'>('hair');
   const [bookable, setBookable] = useState(true);
   const [isActive, setIsActive] = useState(true);
+  const [isFeatured, setIsFeatured] = useState(false);
 
   const load = useCallback(async () => {
     const rows = await getServicesAdmin();
@@ -63,14 +63,14 @@ export default function Services() {
   const resetForm = () => {
     setName(''); setDescription(''); setPrice(''); setDuration('');
     setCategory('hair'); setBookable(true); setIsActive(true); setError(null);
-    setIcon('');
+    setIcon(''); setIsFeatured(false);
   };
 
   const seedForm = (s: Service) => {
     setName(s.name); setDescription(s.description); setPrice(String(s.price_lkr));
     setDuration(String(s.duration_min)); setCategory(s.category);
     setBookable(s.bookable); setIsActive(s.is_active); setError(null);
-    setIcon(s.icon || '');
+    setIcon(s.icon || ''); setIsFeatured(s.is_featured || false);
   };
 
   const handleSave = async () => {
@@ -91,6 +91,7 @@ export default function Services() {
       duration_min: parsedDuration,
       bookable,
       is_active: isActive,
+      is_featured: isFeatured,
       icon: icon.trim() || 'scissors',
     };
 
@@ -197,6 +198,29 @@ export default function Services() {
             <Switch
               value={bookable}
               onValueChange={setBookable}
+              trackColor={{ true: c.accent, false: c.line }}
+            />
+          </View>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: Spacing.md,
+              marginTop: Spacing.sm,
+              borderTopWidth: 1,
+              borderTopColor: c.hairline,
+              paddingTop: Spacing.sm,
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[Type.label, { color: c.fg }]}>Featured Service</Text>
+              <Text style={[Type.caption, { color: c.fgMuted, fontSize: 10 }]}>Display in recommended looks carousel</Text>
+            </View>
+            <Switch
+              value={isFeatured}
+              onValueChange={setIsFeatured}
               trackColor={{ true: c.accent, false: c.line }}
             />
           </View>
@@ -348,6 +372,20 @@ export default function Services() {
                       </Text>
                       
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: 2 }}>
+                        {service.is_featured && (
+                          <View
+                            style={{
+                              borderWidth: 1,
+                              borderColor: c.accent,
+                              backgroundColor: 'rgba(217, 166, 72, 0.08)',
+                              borderRadius: Radius.pill,
+                              paddingHorizontal: Spacing.sm,
+                              paddingVertical: Spacing.xs / 2,
+                            }}
+                          >
+                            <Text style={[Type.caption, { color: c.accentText, fontSize: 10, fontFamily: 'Poppins_600SemiBold' }]}>featured</Text>
+                          </View>
+                        )}
                         {!service.is_active && (
                           <View
                             style={{

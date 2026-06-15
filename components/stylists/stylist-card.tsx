@@ -91,6 +91,18 @@ export function StylistCard({
         <Text style={[Type.caption, { color: roleColor, fontSize: 12 }]}>
           {stylist.role}
         </Text>
+        
+        {/* Rating Display */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
+          <Text style={{ fontSize: 12, color: selected ? (scheme === 'dark' ? '#1C1A17' : '#FFFFFF') : '#D9A648', fontFamily: 'Poppins_700Bold' }}>
+            {stylist.rating && stylist.rating_count && stylist.rating_count > 0 ? `★ ${Number(stylist.rating).toFixed(1)}` : '★ New'}
+          </Text>
+          {!!(stylist.rating_count && stylist.rating_count > 0) && (
+            <Text style={{ fontSize: 11, color: selected ? (scheme === 'dark' ? 'rgba(28,26,23,0.65)' : 'rgba(255,255,255,0.75)') : c.fgMuted, fontFamily: 'Poppins_400Regular' }}>
+              ({stylist.rating_count} reviews)
+            </Text>
+          )}
+        </View>
 
         {/* Stylist Tags */}
         {!!stylist.tags && stylist.tags.length > 0 && (

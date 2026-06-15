@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking, Modal, Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { getBookableServices, getMyBookings, getStylists } from '@/lib/api/queries';
+import { getBookableServices, getMyBookings, getStylists, submitStylistRating } from '@/lib/api/queries';
 import { getGuestBookings, updateGuestBookingStatus, updateGuestBookingTime } from '@/lib/storage/guest-bookings';
 import { getAvailability, rescheduleBooking, cancelBooking } from '@/lib/api/edge';
 import type { SlotEntry } from '@/lib/api/edge';
 import { money } from '@/lib/utils/format';
+import { SALON_PHONE } from '@/constants/salon';
 import { useSession } from '@/context/session';
 import { GuestHeader } from '@/components/auth/guest-header';
 import { Card } from '@/components/ui/card';
@@ -88,7 +89,7 @@ function RescheduleModal({
   onClose: () => void;
   onSuccess: (whenLabel: string, date: string, time: string) => void;
 }) {
-  const { c, Radius, Spacing, Type, scheme } = useTheme();
+  const { c, Radius, Spacing, scheme } = useTheme();
   const dates = useMemo(() => nextNDates(15), []);
 
   const [selectedDate, setSelectedDate] = useState<string>(dates[0]!);
@@ -222,7 +223,7 @@ function RescheduleModal({
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function Schedules() {
-  const { c, Radius, Spacing, Type, scheme } = useTheme();
+  const { c, Radius, Spacing, Type, scheme, Shadow } = useTheme();
   const { user, isGuest, loading } = useSession();
   const [bookings, setBookings] = useState<ScheduleBooking[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -231,6 +232,27 @@ export default function Schedules() {
 
   const [rescheduleTarget, setRescheduleTarget] = useState<ScheduleBooking | null>(null);
   const [cancellingRef, setCancellingRef] = useState<string | null>(null);
+  const [ratingTarget, setRatingTarget] = useState<ScheduleBooking | null>(null);
+  const [userRating, setUserRating] = useState<number | null>(null);
+  const [submittingRating, setSubmittingRating] = useState(false);
+  const [hasRated, setHasRated] = useState(false);
+
+  const handleRateStylist = async (stars: number) => {
+    if (!ratingTarget || !ratingTarget.stylistId || submittingRating || hasRated) return;
+    setUserRating(stars);
+    setSubmittingRating(true);
+    const res = await submitStylistRating(ratingTarget.stylistId, stars);
+    setSubmittingRating(false);
+    if (res.ok) {
+      setHasRated(true);
+      Alert.alert('Rating Submitted ✓', `Thank you for rating ${ratingTarget.stylistName}!`);
+      setTimeout(() => {
+        setRatingTarget(null);
+      }, 1200);
+    } else {
+      Alert.alert('Error', res.error || 'Could not submit rating. Please try again.');
+    }
+  };
 
   const load = useCallback(async () => {
     if (loading) return;
@@ -344,7 +366,7 @@ export default function Schedules() {
     <ScreenContainer
       safeTop={false}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.accent} />}>
-      <ScreenHeader eyebrow="SCHEDULES" title="Your bookings" right={<ThemeToggleButton />} />
+      <ScreenHeader eyebrow="SCHEDULES" title="Your bookings" right={isGuest ? <ThemeToggleButton /> : undefined} />
       {isGuest && <GuestHeader />}
 
       {bookings.length === 0 ? (
@@ -367,201 +389,228 @@ export default function Schedules() {
             return (
               <FadeUp key={booking.reference} index={bookingIndex} animate={!hasAnimated.current}>
                 {(() => {
-                  let statusColor: string = c.accent;
-                  if (isCancelled(booking.status)) {
-                    statusColor = c.error;
-                  } else if (isCompleted(booking)) {
-                    statusColor = scheme === 'dark' ? '#58D68D' : '#27AE60';
-                  }
-
                   return (
                     <Card
                       style={{
                         marginBottom: Spacing.md,
-                        gap: Spacing.md,
-                        borderLeftWidth: 4,
-                        borderLeftColor: statusColor,
-                      }}
-                    >
-                      {/* Title row */}
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.md, alignItems: 'flex-start' }}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={[Type.label, { color: c.fg, fontSize: 16, fontFamily: 'Poppins_700Bold' }]}>
-                            {booking.serviceName}
-                          </Text>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                            <View style={{
-                              backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                              borderRadius: Radius.sm - 2,
-                              paddingHorizontal: 8,
-                              paddingVertical: 3,
-                              borderWidth: 1,
-                              borderColor: c.hairline,
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              gap: 4,
-                            }}>
-                              <MaterialIcons name="qr-code" size={10} color={c.fgMuted} />
-                              <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: 10, color: c.accentText, letterSpacing: 0.5 }}>
-                                {booking.reference}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                        <StatusTag status={booking.status} />
-                      </View>
-
-                      {/* Details card */}
-                      <View style={{
-                        backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
-                        borderRadius: Radius.md,
-                        padding: Spacing.md,
-                        gap: Spacing.sm,
+                        padding: 0,
+                        overflow: 'hidden',
                         borderWidth: 1,
                         borderColor: c.hairline,
-                      }}>
-                        {/* Stylist Row */}
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs + 2 }}>
-                            <View style={{
-                              width: 24, height: 24, borderRadius: Radius.sm,
-                              backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
-                              alignItems: 'center', justifyContent: 'center'
-                            }}>
-                              <MaterialIcons name="person" size={14} color={c.fgMuted} />
-                            </View>
-                            <Text style={{ fontFamily: 'Poppins_500Medium', fontSize: 12, color: c.fgMuted }}>Stylist</Text>
-                          </View>
-                          <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: c.fg }}>{booking.stylistName}</Text>
-                        </View>
-
-                        <View style={{ height: 1, backgroundColor: c.hairline }} />
-
-                        {/* Date & Time Row */}
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs + 2 }}>
-                            <View style={{
-                              width: 24, height: 24, borderRadius: Radius.sm,
-                              backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
-                              alignItems: 'center', justifyContent: 'center'
-                            }}>
-                              <MaterialIcons name="schedule" size={14} color={c.fgMuted} />
-                            </View>
-                            <Text style={{ fontFamily: 'Poppins_500Medium', fontSize: 12, color: c.fgMuted }}>Date & Time</Text>
-                          </View>
-                          <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 12, color: c.fg, flexShrink: 1, textAlign: 'right' }}>{booking.whenLabel}</Text>
-                        </View>
-
-                        {typeof booking.priceLkr === 'number' && (
-                          <>
-                            <View style={{ height: 1, backgroundColor: c.hairline }} />
-                            {/* Price Row */}
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs + 2 }}>
-                                <View style={{
-                                  width: 24, height: 24, borderRadius: Radius.sm,
-                                  backgroundColor: scheme === 'dark' ? 'rgba(217,166,72,0.1)' : 'rgba(194,144,54,0.08)',
-                                  alignItems: 'center', justifyContent: 'center'
-                                }}>
-                                  <MaterialIcons name="payments" size={14} color={c.accentText} />
-                                </View>
-                                <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: 12, color: c.accentText }}>Price</Text>
+                        backgroundColor: c.surfaceRaised,
+                        ...Shadow.sm,
+                      }}
+                    >
+                      {/* Ticket Header (Primary Pass Info) */}
+                      <View style={{ padding: Spacing.md, gap: Spacing.xs }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: Spacing.sm }}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: 16, color: c.fg }}>
+                              {booking.serviceName}
+                            </Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                              <View style={{
+                                backgroundColor: c.accentTint,
+                                borderRadius: Radius.pill,
+                                paddingHorizontal: 8,
+                                paddingVertical: 2,
+                                borderWidth: 1,
+                                borderColor: scheme === 'dark' ? 'rgba(217,166,72,0.15)' : 'rgba(194,144,54,0.12)',
+                              }}>
+                                <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: 10, color: c.accentText, letterSpacing: 0.5 }}>
+                                  #{booking.reference}
+                                </Text>
                               </View>
-                              <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: 14, color: c.accentText }}>{money(booking.priceLkr)}</Text>
                             </View>
-                          </>
-                        )}
+                          </View>
+                          <StatusTag status={booking.status} />
+                        </View>
                       </View>
 
-                      {/* Action buttons */}
-                      {upcoming ? (
-                        <View style={{ gap: Spacing.sm }}>
-                          {/* Row 1: Call + Reschedule (if canAct) */}
-                          <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                            <View style={{ flex: 1 }}>
-                              <PressableScale
-                                onPress={() => Linking.openURL('tel:+94771234567')}
-                                style={{
-                                  borderRadius: Radius.pill, borderWidth: 1, borderColor: c.line,
-                                  backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center', minHeight: 40,
-                                }}>
+                      {/* Dashed Line Ticket-Stub Separator */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 16, marginVertical: -4 }}>
+                        {/* Left ticket circle cut */}
+                        <View style={{ width: 12, height: 24, borderRadius: 12, backgroundColor: c.bg, position: 'absolute', left: -7, borderWidth: 1, borderColor: c.hairline }} />
+                        {/* Dashed line */}
+                        <View style={{ flex: 1, height: 1, borderStyle: 'dashed', borderWidth: 1, borderColor: c.line, borderRadius: 1, marginHorizontal: 12 }} />
+                        {/* Right ticket circle cut */}
+                        <View style={{ width: 12, height: 24, borderRadius: 12, backgroundColor: c.bg, position: 'absolute', right: -7, borderWidth: 1, borderColor: c.hairline }} />
+                      </View>
+
+                      {/* Ticket Details Panel & Actions */}
+                      <View style={{ padding: Spacing.md, gap: Spacing.md }}>
+                        <View style={{
+                          backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.012)',
+                          borderRadius: Radius.md,
+                          padding: Spacing.sm + 4,
+                          gap: Spacing.xs + 2,
+                          borderWidth: 1,
+                          borderColor: c.hairline,
+                        }}>
+                          {/* Stylist Row */}
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <MaterialIcons name="person" size={14} color={c.fgMuted} />
+                              <Text style={{ fontFamily: 'Poppins_500Medium', fontSize: 11, color: c.fgMuted }}>Stylist</Text>
+                            </View>
+                            <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 11, color: c.fg }}>{booking.stylistName}</Text>
+                          </View>
+
+                          <View style={{ height: 1, backgroundColor: c.hairline }} />
+
+                          {/* Date & Time Row */}
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <MaterialIcons name="schedule" size={14} color={c.fgMuted} />
+                              <Text style={{ fontFamily: 'Poppins_500Medium', fontSize: 11, color: c.fgMuted }}>Date & Time</Text>
+                            </View>
+                            <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 11, color: c.fg, textAlign: 'right' }}>{booking.whenLabel}</Text>
+                          </View>
+
+                          {typeof booking.priceLkr === 'number' && (
+                            <>
+                              <View style={{ height: 1, backgroundColor: c.hairline }} />
+                              {/* Price Row */}
+                              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                  <MaterialIcons name="phone" size={14} color={c.accentText} />
-                                  <Text style={{ color: c.accentText, fontSize: 13, fontFamily: 'Poppins_600SemiBold' }}>Call salon</Text>
+                                  <MaterialIcons name="payments" size={14} color={c.accentText} />
+                                  <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: 11, color: c.accentText }}>Price</Text>
+                                </View>
+                                <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: 13, color: c.accentText }}>{money(booking.priceLkr)}</Text>
+                              </View>
+                            </>
+                          )}
+                        </View>
+
+                        {/* Action buttons */}
+                        {upcoming ? (
+                          <View style={{ gap: Spacing.sm }}>
+                            <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                              <PressableScale
+                                onPress={() => Linking.openURL(`tel:${SALON_PHONE}`)}
+                                style={{
+                                  flex: 1,
+                                  borderRadius: Radius.pill,
+                                  borderWidth: 1,
+                                  borderColor: c.line,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  height: 38,
+                                }}
+                              >
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                  <MaterialIcons name="phone" size={12} color={c.accentText} />
+                                  <Text style={{ color: c.accentText, fontSize: 12, fontFamily: 'Poppins_600SemiBold' }}>Call salon</Text>
                                 </View>
                               </PressableScale>
-                            </View>
 
-                            {canAct && (
-                              <View style={{ flex: 1 }}>
+                              {canAct && (
                                 <PressableScale
                                   onPress={() => setRescheduleTarget(booking)}
                                   style={{
-                                    borderRadius: Radius.pill, borderWidth: 1.5,
-                                    borderColor: c.accent, backgroundColor: c.accent,
-                                    alignItems: 'center', justifyContent: 'center', minHeight: 40,
-                                  }}>
+                                    flex: 1,
+                                    borderRadius: Radius.pill,
+                                    backgroundColor: c.accent,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    height: 38,
+                                  }}
+                                >
                                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                    <MaterialIcons name="edit-calendar" size={14} color={scheme === 'dark' ? '#121110' : '#FAFAF8'} />
-                                    <Text style={{ color: scheme === 'dark' ? '#121110' : '#FAFAF8', fontSize: 13, fontFamily: 'Poppins_600SemiBold' }}>Reschedule</Text>
+                                    <MaterialIcons name="edit-calendar" size={12} color={scheme === 'dark' ? '#121110' : '#FAFAF8'} />
+                                    <Text style={{ color: scheme === 'dark' ? '#121110' : '#FAFAF8', fontSize: 12, fontFamily: 'Poppins_600SemiBold' }}>Reschedule</Text>
                                   </View>
                                 </PressableScale>
-                              </View>
+                              )}
+                            </View>
+
+                            {canAct && (
+                              <PressableScale
+                                onPress={() => handleCancel(booking)}
+                                disabled={cancelling}
+                                style={{
+                                  borderRadius: Radius.pill,
+                                  borderWidth: 1,
+                                  borderColor: scheme === 'dark' ? 'rgba(240,133,126,0.3)' : 'rgba(192,57,43,0.2)',
+                                  backgroundColor: scheme === 'dark' ? 'rgba(240,133,126,0.06)' : 'rgba(192,57,43,0.04)',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  height: 38,
+                                }}
+                              >
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                  <MaterialIcons name="cancel" size={12} color={c.error} />
+                                  <Text style={{ color: c.error, fontSize: 12, fontFamily: 'Poppins_600SemiBold' }}>
+                                    {cancelling ? 'Cancelling…' : 'Cancel booking'}
+                                  </Text>
+                                </View>
+                              </PressableScale>
                             )}
                           </View>
-
-                          {/* Row 2: Cancel — full-width destructive */}
-                          {canAct && (
-                            <PressableScale
-                              onPress={() => handleCancel(booking)}
-                              disabled={cancelling}
-                              style={{
-                                borderRadius: Radius.pill, borderWidth: 1.2,
-                                borderColor: scheme === 'dark' ? 'rgba(240,133,126,0.35)' : 'rgba(192,57,43,0.3)',
-                                backgroundColor: scheme === 'dark' ? 'rgba(240,133,126,0.06)' : 'rgba(192,57,43,0.04)',
-                                alignItems: 'center', justifyContent: 'center', minHeight: 40,
-                              }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                <MaterialIcons name="cancel" size={14} color={c.error} />
-                                <Text style={{ color: c.error, fontSize: 13, fontFamily: 'Poppins_600SemiBold' }}>
-                                  {cancelling ? 'Cancelling…' : 'Cancel booking'}
-                                </Text>
-                              </View>
-                            </PressableScale>
-                          )}
-                        </View>
-                      ) : (
-                        /* Past/cancelled: just Book again + Call */
-                        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                          <View style={{ flex: 1 }}>
-                            <PressableScale
-                              onPress={() => Linking.openURL('tel:+94771234567')}
-                              style={{
-                                borderRadius: Radius.pill, borderWidth: 1, borderColor: c.line,
-                                backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center', minHeight: 40,
-                              }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                <MaterialIcons name="phone" size={14} color={c.accentText} />
-                                <Text style={{ color: c.accentText, fontSize: 13, fontFamily: 'Poppins_600SemiBold' }}>Call salon</Text>
-                              </View>
-                            </PressableScale>
+                        ) : (
+                          <View style={{ gap: Spacing.sm }}>
+                            {isCompleted(booking) && booking.stylistId && (
+                              <PressableScale
+                                onPress={() => {
+                                  setUserRating(null);
+                                  setHasRated(false);
+                                  setRatingTarget(booking);
+                                }}
+                                style={{
+                                  borderRadius: Radius.pill,
+                                  borderWidth: 1.5,
+                                  borderColor: c.accent,
+                                  backgroundColor: scheme === 'dark' ? 'rgba(217,166,72,0.06)' : '#FEF6E4',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  height: 38,
+                                }}
+                              >
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                  <MaterialIcons name="star-outline" size={14} color={c.accentText} />
+                                  <Text style={{ color: c.accentText, fontSize: 12, fontFamily: 'Poppins_600SemiBold' }}>Rate {booking.stylistName}</Text>
+                                </View>
+                              </PressableScale>
+                            )}
+                            <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                              <PressableScale
+                                onPress={() => Linking.openURL(`tel:${SALON_PHONE}`)}
+                                style={{
+                                  flex: 1,
+                                  borderRadius: Radius.pill,
+                                  borderWidth: 1,
+                                  borderColor: c.line,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  height: 38,
+                                }}
+                              >
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                  <MaterialIcons name="phone" size={12} color={c.accentText} />
+                                  <Text style={{ color: c.accentText, fontSize: 12, fontFamily: 'Poppins_600SemiBold' }}>Call salon</Text>
+                                </View>
+                              </PressableScale>
+                              
+                              <PressableScale
+                                onPress={() => router.push('/(tabs)/book')}
+                                style={{
+                                  flex: 1,
+                                  borderRadius: Radius.pill,
+                                  backgroundColor: c.accent,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  height: 38,
+                                }}
+                              >
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                  <MaterialIcons name="event" size={12} color={scheme === 'dark' ? '#121110' : '#FAFAF8'} />
+                                  <Text style={{ color: scheme === 'dark' ? '#121110' : '#FAFAF8', fontSize: 12, fontFamily: 'Poppins_600SemiBold' }}>Book again</Text>
+                                </View>
+                              </PressableScale>
+                            </View>
                           </View>
-                          <View style={{ flex: 1 }}>
-                            <PressableScale
-                              onPress={() => router.push('/(tabs)/book')}
-                              style={{
-                                borderRadius: Radius.pill, borderWidth: 1.5,
-                                borderColor: c.accent, backgroundColor: c.accent,
-                                alignItems: 'center', justifyContent: 'center', minHeight: 40,
-                              }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                <MaterialIcons name="event" size={14} color={scheme === 'dark' ? '#121110' : '#FAFAF8'} />
-                                <Text style={{ color: scheme === 'dark' ? '#121110' : '#FAFAF8', fontSize: 13, fontFamily: 'Poppins_600SemiBold' }}>Book again</Text>
-                              </View>
-                            </PressableScale>
-                          </View>
-                        </View>
-                      )}
+                        )}
+                      </View>
                     </Card>
                   );
                 })()}
@@ -599,6 +648,67 @@ export default function Schedules() {
             Alert.alert('Rescheduled ✓', `Your appointment has been moved to ${whenLabel}.`);
           }}
         />
+      )}
+
+      {/* Rate Stylist Modal */}
+      {ratingTarget && (
+        <Modal visible animationType="fade" transparent onRequestClose={() => setRatingTarget(null)}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: Spacing.md }}>
+            <PressableScale onPress={() => setRatingTarget(null)} style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}>
+              <View style={{ flex: 1 }} />
+            </PressableScale>
+            
+            <View style={{
+              width: '100%',
+              maxWidth: 340,
+              backgroundColor: c.surfaceRaised,
+              borderRadius: 24,
+              borderWidth: 1,
+              borderColor: c.accent,
+              padding: Spacing.lg,
+              gap: Spacing.md,
+              shadowColor: '#1C1A17',
+              shadowOpacity: 0.22,
+              shadowRadius: 28,
+              shadowOffset: { width: 0, height: 10 },
+              elevation: 12,
+            }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={[Type.h2, { color: c.fg, fontFamily: 'Poppins_700Bold', fontSize: 18 }]}>Rate Stylist</Text>
+                <PressableScale onPress={() => setRatingTarget(null)} style={{ padding: 4 }}>
+                  <MaterialIcons name="close" size={20} color={c.fgMuted} />
+                </PressableScale>
+              </View>
+
+              <Text style={[Type.body, { color: c.fg2, fontSize: 13, lineHeight: 18, textAlign: 'center', marginVertical: Spacing.xs }]}>
+                How was your service with <Text style={{ fontFamily: 'Poppins_700Bold', color: c.fg }}>{ratingTarget.stylistName}</Text> for <Text style={{ fontFamily: 'Poppins_600SemiBold' }}>{ratingTarget.serviceName}</Text>?
+              </Text>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginVertical: Spacing.sm }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <PressableScale
+                    key={star}
+                    onPress={() => handleRateStylist(star)}
+                    disabled={submittingRating || hasRated}
+                    style={{ padding: 4 }}
+                  >
+                    <MaterialIcons
+                      name={star <= (userRating ?? 0) ? 'star' : 'star-outline'}
+                      size={36}
+                      color={star <= (userRating ?? 0) ? '#D9A648' : c.fgMuted}
+                    />
+                  </PressableScale>
+                ))}
+              </View>
+
+              {hasRated && (
+                <Text style={{ color: '#2ECC71', fontSize: 12, fontFamily: 'Poppins_600SemiBold', textAlign: 'center' }}>
+                  Rating submitted! Thank you! ❤️
+                </Text>
+              )}
+            </View>
+          </View>
+        </Modal>
       )}
     </ScreenContainer>
   );
