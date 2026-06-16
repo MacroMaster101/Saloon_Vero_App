@@ -3,6 +3,7 @@ import {
   getConversationHeader,
   getMessages,
   markRead,
+  notifyOtherParticipant,
   sendBookingMessage,
   sendImageMessage,
   sendMessage,
@@ -20,6 +21,7 @@ import { ImageViewerModal } from '@/components/chat/ImageViewerModal';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Image as ExpoImage } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import { ensureCameraPermission, ensurePhotoLibraryPermission } from '@/lib/permissions/photos';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -114,25 +116,37 @@ export default function ThreadScreen() {
     setDraft('');
     const res = await sendMessage({ conversationId, senderId: user.id, body });
     if ('error' in res) setDraft(body); // restore on failure
+    else notifyOtherParticipant(conversationId, body.trim());
     setSending(false);
   };
 
-  const pickImage = async () => {
+  const pickImage = () => {
+    Alert.alert('Add photo', 'Choose a photo to send', [
+      { text: 'Choose from Library', onPress: () => addPhoto('library') },
+      { text: 'Take Photo', onPress: () => addPhoto('camera') },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const addPhoto = async (source: 'library' | 'camera') => {
     try {
+      const allowed = source === 'camera'
+        ? await ensureCameraPermission()
+        : await ensurePhotoLibraryPermission();
+      if (!allowed) return;
       // Single pick with the system crop/edit screen. expo-image-picker only
       // offers interactive cropping during selection (allowsEditing), and only
       // for a single asset — so picking is one-at-a-time. Tap the button again
       // to add more photos before sending.
-      const res = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        quality: 0.7,
-        allowsEditing: true,
-      });
+      const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.7, allowsEditing: true };
+      const res = source === 'camera'
+        ? await ImagePicker.launchCameraAsync(opts)
+        : await ImagePicker.launchImageLibraryAsync(opts);
       if (res.canceled) return;
       setUploadError(null);
       setPendingImages((prev) => [...prev, res.assets[0].uri]);
     } catch (e: any) {
-      Alert.alert('Error', e?.message ?? 'Could not open the photo library.');
+      Alert.alert('Error', e?.message ?? 'Could not open the camera or photo library.');
     }
   };
 
@@ -160,6 +174,7 @@ export default function ThreadScreen() {
         setSending(false);
         return;
       }
+      notifyOtherParticipant(conversationId, '📅 Booking');
       setPendingBookingId(null);
       setDraft('');
       setSending(false);
@@ -194,6 +209,7 @@ export default function ThreadScreen() {
         return;
       }
     }
+    notifyOtherParticipant(conversationId, text || '📷 Photo');
     setPendingImages([]);
     setDraft('');
     setSending(false);

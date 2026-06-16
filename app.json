@@ -40,11 +40,31 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Saloon Vero uses your photos to set your profile picture and share images in chat.",
+          "cameraPermission": "Saloon Vero uses your camera to take a profile picture or capture photos to share in chat.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#A87A2E"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d861ed91-cb4c-4946-b311-cedeec3a9ab5"
+      }
     }
   }
 }

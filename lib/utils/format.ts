@@ -10,7 +10,8 @@ export function minutesToLabel(min: number): string {
   const m = min % 1440;
   const h24 = Math.floor(m / 60);
   const mm = m % 60;
-  const period = h24 < 12 || h24 === 24 ? 'AM' : 'PM';
+  // h24 is always 0–23 here (m is taken mod 1440), so 0–11 = AM, 12–23 = PM.
+  const period = h24 < 12 ? 'AM' : 'PM';
   let h12 = h24 % 12; if (h12 === 0) h12 = 12;
   // 1440 (midnight next day) and 0 both render as 12:00 AM
   return `${h12}:${String(mm).padStart(2, '0')} ${period}`;

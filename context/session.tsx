@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/api/supabase';
@@ -136,25 +136,28 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [userId]);
 
-  const clearGuestMode = async () => {
+  // Handlers are stabilised with useCallback so the memoised context value below
+  // only changes when actual state changes — otherwise every provider render
+  // would hand consumers a new value and re-render most of the app.
+  const clearGuestMode = useCallback(async () => {
     await AsyncStorage.removeItem(GUEST_MODE_KEY);
     setIsGuest(false);
-  };
-  const continueAsGuest = async () => {
+  }, []);
+  const continueAsGuest = useCallback(async () => {
     await AsyncStorage.setItem(GUEST_MODE_KEY, 'true');
     setIsGuest(true);
-  };
-  const signOut = async () => {
+  }, []);
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setRecovering(false);
     await clearGuestMode();
-  };
+  }, [clearGuestMode]);
   // Called by the reset screen right after verifying the recovery code, so the
   // app holds the user on the new-password step instead of routing them in.
-  const beginRecovery = () => setRecovering(true);
+  const beginRecovery = useCallback(() => setRecovering(true), []);
 
-  return (
-    <Ctx.Provider value={{
+  const value = useMemo(
+    () => ({
       user: session?.user ?? null,
       session,
       loading,
@@ -166,9 +169,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       continueAsGuest,
       clearGuestMode,
       signOut,
-    }}>
-      {children}
-    </Ctx.Provider>
+    }),
+    [session, loading, isGuest, recovering, profile, profileChecked, beginRecovery, continueAsGuest, clearGuestMode, signOut],
   );
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 export const useSession = () => useContext(Ctx);

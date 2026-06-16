@@ -35,11 +35,23 @@ export function BookingPickerSheet({
 
   useEffect(() => {
     if (!visible || !stylistId || !customerId) return;
+    let active = true;
     setLoading(true);
-    getStylistCustomerBookings(stylistId, customerId).then((r) => {
-      setRows(r);
-      setLoading(false);
-    });
+    getStylistCustomerBookings(stylistId, customerId)
+      .then((r) => {
+        if (!active) return;
+        setRows(r);
+        setLoading(false);
+      })
+      .catch(() => {
+        // Don't hang on the spinner forever if the fetch fails — show empty.
+        if (!active) return;
+        setRows([]);
+        setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [visible, stylistId, customerId]);
 
   return (

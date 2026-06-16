@@ -305,7 +305,7 @@ export default function BookingFlow() {
         eyebrow="BOOK YOUR VISIT"
         title={STEP_TITLES[state.step] ?? 'Booking'}
         left={<BackButton onPress={state.step === 'stylist' ? undefined : () => dispatch({ type: 'back' })} />}
-        right={<ThemeToggleButton />}
+        right={isGuest ? <ThemeToggleButton /> : undefined}
       />
       <StepIndicator total={4} current={STEPS.indexOf(state.step)} />
 

@@ -3,17 +3,39 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Notifications from 'expo-notifications';
 import {
   useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold, Poppins_800ExtraBold,
 } from '@expo-google-fonts/poppins';
 import 'react-native-reanimated';
 
-import { SessionProvider } from '@/context/session';
+import { SessionProvider, useSession } from '@/context/session';
 import { ThemePreferenceProvider, useThemePreference } from '@/context/theme';
+import { PermissionPrimerProvider } from '@/components/permissions/PermissionPrimer';
+import { registerForPushNotifications } from '@/lib/notifications/register';
 import { Colors } from '@/constants/theme';
 
 export const unstable_settings = { anchor: '(tabs)' };
 SplashScreen.preventAutoHideAsync();
+
+// Show notifications while the app is foregrounded.
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+/** Registers the device for push once a user is signed in. */
+function PushRegistrar() {
+  const { user } = useSession();
+  useEffect(() => {
+    if (user) registerForPushNotifications(user.id);
+  }, [user]);
+  return null;
+}
 
 function RootNavigator() {
   const { resolvedScheme } = useThemePreference();
@@ -49,7 +71,10 @@ export default function RootLayout() {
   return (
     <SessionProvider>
       <ThemePreferenceProvider>
-        <RootNavigator />
+        <PermissionPrimerProvider>
+          <PushRegistrar />
+          <RootNavigator />
+        </PermissionPrimerProvider>
       </ThemePreferenceProvider>
     </SessionProvider>
   );

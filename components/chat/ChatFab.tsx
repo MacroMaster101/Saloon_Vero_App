@@ -1,4 +1,4 @@
-import { getMyConversations, subscribeToInbox } from '@/lib/api/chat';
+import { getUnreadCount, subscribeToInbox } from '@/lib/api/chat';
 import { useSession } from '@/context/session';
 import { useTheme } from '@/hooks/use-theme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -14,8 +14,7 @@ export function ChatFab() {
 
   const refresh = useCallback(async () => {
     if (!user) return;
-    const items = await getMyConversations(user.id, asStylistId);
-    setUnread(items.reduce((sum, i) => sum + i.unread, 0));
+    setUnread(await getUnreadCount(asStylistId));
   }, [user, asStylistId]);
 
   useEffect(() => {
