@@ -5,7 +5,8 @@ export function friendlyAuthError(message: string): string {
   if (m.includes('invalid login credentials')) return 'Wrong email or password.';
   if (m.includes('error sending') || m.includes('error sending recovery email'))
     return 'Could not send the email right now. Please try again in a few minutes.';
-  if (m.includes('same password')) return 'Choose a password different from your current one.';
+  if (m.includes('same password') || (m.includes('password') && m.includes('different')))
+    return 'Choose a password different from your current one.';
   if (m.includes('token has expired') || m.includes('otp_expired') || m.includes('expired'))
     return 'That code has expired. Tap resend to get a new one.';
   if (m.includes('invalid') && (m.includes('token') || m.includes('otp')))

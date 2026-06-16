@@ -1,5 +1,6 @@
 import { ThemedButton } from '@/components/ui/button';
 import { ThemeToggleButton } from '@/components/ui/theme-toggle-button';
+import { CoachTooltip, PulseRing } from '@/components/ui/coach-tooltip';
 import { useSession } from '@/context/session';
 import { routeForSession } from '@/lib/auth/routing';
 import { useTheme } from '@/hooks/use-theme';
@@ -22,6 +23,8 @@ export default function EntryScreen() {
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
   const [delayFinished, setDelayFinished] = useState(process.env.NODE_ENV === 'test');
   const [progress, setProgress] = useState(0);
+  // Dismissible coach mark pointing at the theme toggle (first-time users only).
+  const [themeTipDismissed, setThemeTipDismissed] = useState(false);
 
   // Animations
   const logoScale = useSharedValue(1);
@@ -185,9 +188,20 @@ export default function EntryScreen() {
   // Render Onboarding Welcome Screen
   return (
     <View style={[styles.container, { backgroundColor: c.bg }]}>
-      {/* Floating ThemeToggleButton */}
-      <View style={{ position: 'absolute', top: insets.top + Spacing.sm, right: Spacing.md, zIndex: 10 }}>
-        <ThemeToggleButton />
+      {/* Floating ThemeToggleButton + first-run coach mark */}
+      <View style={{ position: 'absolute', top: insets.top + Spacing.sm, right: Spacing.md, zIndex: 10, alignItems: 'flex-end' }}>
+        <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+          <PulseRing size={40} visible={isFirstTime === true && !themeTipDismissed} />
+          {/* Dismiss the tip as soon as the user interacts with the toggle. */}
+          <View onTouchStart={() => setThemeTipDismissed(true)}>
+            <ThemeToggleButton />
+          </View>
+        </View>
+        <CoachTooltip
+          label="Switch light or dark mode"
+          visible={isFirstTime === true && !themeTipDismissed}
+          onDismiss={() => setThemeTipDismissed(true)}
+        />
       </View>
 
       <ScrollView

@@ -74,7 +74,7 @@ export default function Home() {
         const reported = pairs[1][1] ? new Set<string>(JSON.parse(pairs[1][1])) : new Set<string>();
         setLikedIds(liked);
         setReportedIds(reported);
-      } catch { /* ignore */ }
+      } catch (e) { if (__DEV__) console.warn('Failed to parse stored review state:', e); }
     });
   }, []);
 

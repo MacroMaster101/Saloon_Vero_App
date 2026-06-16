@@ -41,13 +41,13 @@ async function migrateGuestBookings(userId: string) {
   try {
     const raw = await AsyncStorage.getItem('saloon_vero_guest_bookings');
     if (!raw) return;
-    const bookings = JSON.parse(raw);
+    const bookings = JSON.parse(raw) as { reference?: string }[];
     if (!Array.isArray(bookings) || bookings.length === 0) return;
 
-    const references = bookings.map((b: any) => b.reference).filter(Boolean);
+    const references = bookings.map((b) => b.reference).filter((r): r is string => Boolean(r));
     if (references.length === 0) return;
 
-    const { error } = await (supabase as any).rpc('claim_bookings', { p_booking_references: references });
+    const { error } = await supabase.rpc('claim_bookings', { p_booking_references: references });
     if (error) {
       console.error('Failed to claim guest bookings:', error);
       return;

@@ -63,5 +63,9 @@ const styles = StyleSheet.create({
   wrapper: { flex: 1, overflow: 'hidden' },
   safe: { flex: 1 },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1 },
+  // flexGrow lets short screens still fill the viewport (so children that use
+  // `flex: 1` to center work), while alignItems/justifyContent keep their
+  // defaults — children are NOT stretched. Without this, blurred Cards on iOS
+  // grow vertically into tall arches when content is shorter than the screen.
+  scrollContent: { flexGrow: 1, alignItems: 'stretch', justifyContent: 'flex-start' },
 });

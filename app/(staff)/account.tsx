@@ -5,13 +5,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getStylists, getStylistReviews, likeReview } from '@/lib/api/queries';
 import type { StylistReview } from '@/types/database';
 import { updateOwnProfile } from '@/lib/api/profile';
+import { changePassword, userHasPassword } from '@/lib/auth/change-password';
+import { validatePassword } from '@/lib/auth/signup-validation';
 import { useSession } from '@/context/session';
 import { Card } from '@/components/ui/card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
-import { SegmentedControl } from '@/components/ui/segmented-control';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { ThemedButton } from '@/components/ui/button';
 import { ThemedTextInput } from '@/components/ui/text-input';
@@ -20,7 +21,6 @@ import { StarRow } from '@/components/reviews/star-row';
 import { formatRelativeDate } from '@/lib/utils/format';
 import { REVIEW_STORAGE_KEYS } from '@/lib/utils/reviews';
 import { useTheme } from '@/hooks/use-theme';
-import { useThemePreference } from '@/context/theme';
 
 type Stylist = { id: string; name: string; slug?: string };
 
@@ -28,7 +28,6 @@ const HEARTED_KEY = REVIEW_STORAGE_KEYS.staffHearted;
 
 export default function StaffAccount() {
   const { c, Type, Spacing, Radius, scheme } = useTheme();
-  const { pref, setPref } = useThemePreference();
   const { user, profile, signOut } = useSession();
   const [stylistName, setStylistName] = useState<string>('-');
   const metadataName = (user?.user_metadata?.full_name as string | undefined) ?? '';
@@ -45,6 +44,16 @@ export default function StaffAccount() {
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [heartedIds, setHeartedIds] = useState<Set<string>>(new Set());
   const [heartingId, setHeartingId] = useState<string | null>(null);
+
+  // Security (password) section
+  const [pwOpen, setPwOpen] = useState(false);
+  const [currentPw, setCurrentPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwDone, setPwDone] = useState(false);
+  const hasPassword = userHasPassword(user);
 
   useEffect(() => {
     setName(metadataName || user?.email || '');
@@ -76,7 +85,7 @@ export default function StaffAccount() {
     // Load persisted hearted set from storage
     AsyncStorage.getItem(HEARTED_KEY).then((raw) => {
       if (raw) {
-        try { setHeartedIds(new Set(JSON.parse(raw))); } catch { /* ignore */ }
+        try { setHeartedIds(new Set(JSON.parse(raw))); } catch (e) { if (__DEV__) console.warn('Failed to parse stored hearts:', e); }
       }
     });
   }, [profile?.stylistId]));
@@ -137,13 +146,40 @@ export default function StaffAccount() {
     setEditingProfile(false);
   }
 
+  async function submitPassword() {
+    if (pwBusy || !user?.email) return;
+    setPwError(null);
+    setPwDone(false);
+
+    const pwErr = validatePassword(newPw);
+    if (pwErr) return setPwError(pwErr);
+    if (newPw !== confirmPw) return setPwError("Passwords don't match");
+    if (hasPassword && !currentPw) return setPwError('Enter your current password');
+    if (hasPassword && newPw === currentPw) {
+      return setPwError('Choose a password different from your current one.');
+    }
+
+    setPwBusy(true);
+    const err = await changePassword({
+      email: user.email,
+      currentPassword: currentPw,
+      newPassword: newPw,
+      verifyCurrent: hasPassword,
+    });
+    setPwBusy(false);
+    if (err) return setPwError(err);
+
+    setCurrentPw(''); setNewPw(''); setConfirmPw('');
+    setPwDone(true);
+  }
+
   const avgRating = reviews.length > 0
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : null;
 
   return (
     <ScreenContainer safeTop={false}>
-      <ScreenHeader eyebrow="Staff" title={firstName} subtitle="Account and preferences." />
+      <ScreenHeader eyebrow="Staff" title={firstName} subtitle="Your account and reviews." />
 
       <StaffSectionLabel>Profile</StaffSectionLabel>
       <Card style={{ marginBottom: Spacing.lg, padding: 0, overflow: 'hidden', borderLeftWidth: 4, borderLeftColor: c.accent }}>
@@ -316,24 +352,66 @@ export default function StaffAccount() {
         </View>
       )}
 
-      {/* ── Preferences ──────────────────────────────────────────────── */}
-      <StaffSectionLabel>Preferences</StaffSectionLabel>
-      <Card style={{ marginBottom: Spacing.lg, gap: Spacing.sm }}>
-        <Text style={[Type.label, { color: c.fg, fontFamily: 'Poppins_600SemiBold' }]}>Appearance</Text>
-        <SegmentedControl
-          options={[
-            { value: 'light', label: 'Light', icon: 'sun.max.fill' },
-            { value: 'system', label: 'System', icon: 'gearshape.fill' },
-            { value: 'dark', label: 'Dark', icon: 'moon.fill' },
-          ] as const}
-          value={pref}
-          onChange={setPref}
-        />
-        <Text style={[Type.caption, { color: c.fgMuted }]}>
-          {pref === 'system'
-            ? `Following your device - currently ${scheme}.`
-            : `Always ${pref}.`}
-        </Text>
+      {/* ── Security (collapsible password) ──────────────────────────── */}
+      <StaffSectionLabel>Security</StaffSectionLabel>
+      <Card style={{ marginBottom: Spacing.lg, padding: 0, overflow: 'hidden' }}>
+        <PressableScale
+          accessibilityRole="button"
+          onPress={() => { setPwOpen((v) => !v); setPwError(null); setPwDone(false); }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md, padding: Spacing.md }}
+        >
+          <IconSymbol name="lock.fill" size={18} color={c.fgMuted} />
+          <Text style={[Type.label, { flex: 1, color: c.fg, fontSize: 15, fontFamily: 'Poppins_600SemiBold' }]}>
+            {hasPassword ? 'Change password' : 'Set a password'}
+          </Text>
+          {pwDone && !pwOpen && (
+            <Text style={[Type.caption, { color: c.accentText, fontFamily: 'Poppins_600SemiBold' }]}>Saved</Text>
+          )}
+          <IconSymbol name={pwOpen ? 'xmark' : 'chevron.right'} size={16} color={c.fgMuted} />
+        </PressableScale>
+
+        {pwOpen && (
+          <View style={{ paddingHorizontal: Spacing.md, paddingBottom: Spacing.md, gap: Spacing.xs, borderTopWidth: 1, borderTopColor: c.hairline, paddingTop: Spacing.md }}>
+            {!hasPassword && (
+              <Text style={[Type.caption, { color: c.fgMuted, marginBottom: Spacing.xs }]}>
+                You signed in with Google — set one to also log in by email.
+              </Text>
+            )}
+            {hasPassword && (
+              <ThemedTextInput
+                icon="lock.fill"
+                label="Current password"
+                placeholder="••••••••"
+                secureToggle
+                value={currentPw}
+                onChangeText={(t) => { setCurrentPw(t); setPwError(null); }}
+              />
+            )}
+            <ThemedTextInput
+              icon="lock.fill"
+              label="New password"
+              placeholder="••••••••"
+              secureToggle
+              value={newPw}
+              onChangeText={(t) => { setNewPw(t); setPwError(null); }}
+            />
+            <ThemedTextInput
+              icon="lock.fill"
+              label="Confirm new password"
+              placeholder="••••••••"
+              secureToggle
+              value={confirmPw}
+              onChangeText={(t) => { setConfirmPw(t); setPwError(null); }}
+            />
+            {pwError && <Text style={[Type.caption, { color: c.error, fontFamily: 'Poppins_600SemiBold' }]}>{pwError}</Text>}
+            <ThemedButton
+              label={hasPassword ? 'Update password' : 'Set password'}
+              busy={pwBusy}
+              onPress={submitPassword}
+              style={{ marginTop: Spacing.xs, minHeight: 46 }}
+            />
+          </View>
+        )}
       </Card>
 
       <ThemedButton

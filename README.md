@@ -46,11 +46,13 @@ A premium **React Native + Expo SDK 54 + TypeScript** mobile application for **S
     *   📧 Email and Password signup/login with **in-app 6-digit OTP** verification (Supabase Auth).
     *   🌐 **"Continue with Google"** OAuth integration via `expo-auth-session` and `expo-web-browser`, returning to the app through the `saloonveroapp://auth/callback` deep link.
     *   🔑 **Password reset** via emailed OTP code, then in-app new-password entry.
+    *   🔒 **In-app password change** from every account screen (customer, staff, admin): email users re-enter their current password to confirm, while Google-only accounts can **set** a password to also sign in by email. Raw Supabase errors are mapped to friendly copy (`lib/auth/friendly-error.ts`).
     *   🕶️ **Guest mode:** Browse services and book without an account. Bookings are kept locally in `AsyncStorage` and automatically claimed and merged into the user's account upon sign-up or login.
 *   **🎨 Aesthetics & Theming ("Warm Luxe"):**
     *   🌗 Curated light and dark brand modes driven automatically by the device's system settings.
     *   ✍️ Refined **Poppins** typography (weights from `400Regular` to `800ExtraBold`).
     *   ✨ Fluid animations and interactive press-feedbacks (0.97x button/card spring-scaling via a shared `PressableScale` primitive), staggered list entrances, skeleton loaders, and centered safe-area-aware layouts — all powered by `react-native-reanimated`.
+    *   👆 A **first-run coach mark** on the welcome screen points at the theme toggle (a pointer bubble plus a pulsing accent ring), shown only to first-time users and dismissed on tap or after a few seconds (`components/ui/coach-tooltip.tsx`).
 *   **📅 Booking Wizard:**
     *   🚶‍♂️ Stepped flow: Service Selection $\rightarrow$ Stylist Choice (or *"Any Stylist"*) $\rightarrow$ Date selection in a gorgeous 3-column square card grid (complete with `TODAY`/`TOMORROW` badges and custom amber branding for Poson Poya day) $\rightarrow$ Real-Time Available Time Slots $\rightarrow$ Contact Details $\rightarrow$ Success.
 *   **👤 Schedules, Cancel & Reschedule (For All Users):**
@@ -87,6 +89,7 @@ A premium **React Native + Expo SDK 54 + TypeScript** mobile application for **S
     *   🖼️ **Avatar source switcher** — choose between a generated **DiceBear cartoon** (tap to shuffle a fresh one), your **email/Google account photo** (shown only when available), or a **custom upload** to Supabase Storage. The choice is saved on the user's auth metadata and applied everywhere the avatar appears.
     *   ✍️ Profile details (name, mobile) save through a dedicated form whose **Save / Cancel buttons appear only when something is edited**, with a confirmation on save; email is shown read-only.
     *   📊 A compact stats strip surfaces total and upcoming booking counts (upcoming computed by the same future-and-not-cancelled rule as the Schedules tab).
+    *   🔒 A **Security** section to change (or, for Google accounts, set) the password without leaving the app.
     *   🌗 **Theme preference** (light / dark / system) persisted across sessions. Guests, who have no account page, get an inline theme toggle on the customer screens instead.
     *   ✨ **New Things tab** highlighting fresh services and salon updates.
 
@@ -105,6 +108,7 @@ A premium **React Native + Expo SDK 54 + TypeScript** mobile application for **S
 *   **💬 Realtime Chat Layer:** Conversations and messages live in their own RLS-guarded tables, with `postgres-changes` subscriptions driving live threads and unread badges, database triggers maintaining unread counts and previews, and a private Storage bucket (signed URLs) for photo messages.
 *   **🔔 Notifications & Permissions:** Push tokens are stored per-device in a `push_tokens` table; sends run server-side from the booking functions and the `notify` function (shared `sendExpoPush` helper). On the client, a small `lib/permissions/` layer pairs the OS prompts with a branded priming modal mounted at the app root.
 *   **🧩 Feature-Oriented Organization:** Shared UI, booking logic, API wrappers (per role), auth helpers, review utilities, business constants, validation schemas, and database types are separated into focused folders so the app is easy to extend.
+*   **🛟 Root Error Boundary:** The root layout exports an Expo Router `ErrorBoundary` (`app/_layout.tsx`) that catches uncaught render errors and shows a friendly, retryable fallback instead of a white screen. It is intentionally self-contained (no theme/session context) so it still renders even if a provider is what threw — showing the error details in development and a generic message in production.
 
 ---
 
@@ -113,7 +117,7 @@ A premium **React Native + Expo SDK 54 + TypeScript** mobile application for **S
 ```text
 Saloon_Vero_App/
   app/                         # 📂 Expo Router file-based screens and layouts
-    _layout.tsx                # ⚙️ Global providers, fonts, splash handling, route setup
+    _layout.tsx                # ⚙️ Global providers, fonts, splash handling, route setup, root ErrorBoundary
     index.tsx                  # ✨ Branded splash/onboarding entry screen
     access.tsx                 # 🚪 Sign-in / guest-mode gateway screen
     (auth)/                    # 🔐 Auth stack: login, signup, forgot-password (OTP)
@@ -161,7 +165,7 @@ Saloon_Vero_App/
   lib/                         # 🧰 App logic separated by responsibility
     api/                       # ⚡ Supabase client, queries, admin/staff/chat APIs, Edge wrappers
     admin/                     # 🛠️ Admin helpers (slugify, stats, profile rules)
-    auth/                      # 🌐 Google OAuth, routing, signup/error helpers
+    auth/                      # 🌐 Google OAuth, routing, signup/error & change-password helpers
     booking/                   # 📆 Booking reducer and availability calculations
     chat/                      # 💬 Chat helpers (image paths, message previews)
     notifications/             # 🔔 Push token registration (register.ts)
@@ -250,7 +254,7 @@ Booking and chat pushes need three pieces wired up:
 
 ## 🧪 Testing
 
-The codebase includes an automated test suite containing **140 tests across 40 suites**, covering state transitions, availability logic, Google OAuth redirect handling, environment validation, onboarding behavior, staff status actions, admin/people role guards, and custom UI components (buttons, cards, loaders, skeletons, empty states, and entrance/press animations).
+The codebase includes an automated test suite containing **153 tests across 41 suites**, covering state transitions, availability logic, Google OAuth redirect handling, password-change & friendly auth-error mapping, environment validation, onboarding behavior, staff status actions, admin/people role guards, and custom UI components (buttons, cards, loaders, skeletons, empty states, and entrance/press animations).
 
 > ℹ️ The `__tests__/` folder is **git-ignored and kept local-only** — it is not uploaded to GitHub. The tests still run on your machine for local verification.
 
