@@ -123,7 +123,7 @@ export async function getUnreadCount(asStylistId: string | null): Promise<number
   const col = asStylistId ? 'stylist_unread' : 'customer_unread';
   const { data } = await supabase.from('conversations').select(col);
   if (!data) return 0;
-  return (data as Array<Record<string, number>>).reduce((sum, r) => sum + (r[col] ?? 0), 0);
+  return (data as Record<string, number>[]).reduce((sum, r) => sum + (r[col] ?? 0), 0);
 }
 
 /** The other party's display name + avatar for a single conversation header. */
@@ -271,7 +271,7 @@ export async function getBookingCard(bookingId: string): Promise<BookingCardData
 export async function getStylistCustomerBookings(
   stylistId: string,
   customerId: string,
-): Promise<Array<{ id: string; reference: string; serviceName: string; startsAt: string; status: string }>> {
+): Promise<{ id: string; reference: string; serviceName: string; startsAt: string; status: string }[]> {
   const { data } = await supabase
     .from('bookings')
     .select('id,reference,starts_at,status,services(name)')

@@ -9,6 +9,8 @@ import { uploadImage } from '@/lib/api/storage';
 import { ensureCameraPermission, ensurePhotoLibraryPermission } from '@/lib/permissions/photos';
 import { getMyBookings } from '@/lib/api/queries';
 import { getAvatarInfo } from '@/lib/utils/avatar';
+import { changePassword, userHasPassword } from '@/lib/auth/change-password';
+import { validatePassword } from '@/lib/auth/signup-validation';
 import { ScreenContainer } from '@/components/ui/screen';
 import { Card } from '@/components/ui/card';
 import { ThemedTextInput } from '@/components/ui/text-input';
@@ -36,6 +38,13 @@ export default function Account() {
   const [meta, setMeta] = useState<Record<string, unknown>>({});
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Security (password) section state.
+  const [currentPw, setCurrentPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwDone, setPwDone] = useState(false);
 
   useEffect(() => { if (!loading && !user) router.replace('/(auth)/login'); }, [loading, user]);
   useEffect(() => {
@@ -50,6 +59,7 @@ export default function Account() {
 
   const seed = user?.email ?? name;
   const avatar = useMemo(() => getAvatarInfo(meta, seed), [meta, seed]);
+  const hasPassword = useMemo(() => userHasPassword(user), [user]);
 
   // True when the details form differs from what's saved (drives the save button).
   const detailsDirty = name.trim() !== savedName.trim() || phone.trim() !== savedPhone.trim();
@@ -77,6 +87,33 @@ export default function Account() {
   function resetDetails() {
     setName(savedName);
     setPhone(savedPhone);
+  }
+
+  async function submitPassword() {
+    if (pwBusy || !user?.email) return;
+    setPwError(null);
+    setPwDone(false);
+
+    const pwErr = validatePassword(newPw);
+    if (pwErr) return setPwError(pwErr);
+    if (newPw !== confirmPw) return setPwError("Passwords don't match");
+    if (hasPassword && !currentPw) return setPwError('Enter your current password');
+    if (hasPassword && newPw === currentPw) {
+      return setPwError('Choose a password different from your current one.');
+    }
+
+    setPwBusy(true);
+    const err = await changePassword({
+      email: user.email,
+      currentPassword: currentPw,
+      newPassword: newPw,
+      verifyCurrent: hasPassword,
+    });
+    setPwBusy(false);
+    if (err) return setPwError(err);
+
+    setCurrentPw(''); setNewPw(''); setConfirmPw('');
+    setPwDone(true);
   }
 
   // Patch user_metadata both remotely and in our local mirror so the avatar
@@ -327,6 +364,50 @@ export default function Account() {
         <Text style={[Type.caption, { color: c.fgMuted, marginTop: Spacing.sm }]}>
           {pref === 'system' ? `Following your device — currently ${scheme}.` : `Always ${pref}.`}
         </Text>
+      </Card>
+
+      {/* ── Security: change or set a password ────────────────────────────── */}
+      <SectionHeader number={4} eyebrow="Security" title="Password" />
+      <Card flatOnMobile style={{ padding: Spacing.lg, gap: Spacing.xs }}>
+        {!hasPassword && (
+          <Text style={[Type.caption, { color: c.fgMuted, marginBottom: Spacing.xs }]}>
+            You signed in with Google. Set a password to also log in with your email.
+          </Text>
+        )}
+        {hasPassword && (
+          <ThemedTextInput
+            icon="lock.fill"
+            label="Current password"
+            placeholder="••••••••"
+            secureToggle
+            value={currentPw}
+            onChangeText={(t) => { setCurrentPw(t); setPwError(null); setPwDone(false); }}
+          />
+        )}
+        <ThemedTextInput
+          icon="lock.fill"
+          label="New password"
+          placeholder="••••••••"
+          secureToggle
+          value={newPw}
+          onChangeText={(t) => { setNewPw(t); setPwError(null); setPwDone(false); }}
+        />
+        <ThemedTextInput
+          icon="lock.fill"
+          label="Confirm new password"
+          placeholder="••••••••"
+          secureToggle
+          value={confirmPw}
+          onChangeText={(t) => { setConfirmPw(t); setPwError(null); setPwDone(false); }}
+        />
+        {pwError && <Text style={[Type.caption, { color: c.error, textAlign: 'center' }]}>{pwError}</Text>}
+        {pwDone && <Text style={[Type.caption, { color: c.accentText, textAlign: 'center' }]}>{hasPassword ? 'Password updated.' : 'Password set.'}</Text>}
+        <ThemedButton
+          label={hasPassword ? 'Update password' : 'Set password'}
+          busy={pwBusy}
+          onPress={submitPassword}
+          style={{ marginTop: Spacing.xs }}
+        />
       </Card>
 
       {/* ── Account actions ───────────────────────────────────────────────── */}

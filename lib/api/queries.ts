@@ -120,7 +120,7 @@ export async function getStylistReviews(stylistId: string, stylistSlug?: string)
       .order('created_at', { ascending: false });
       
     if (error) {
-      console.log('Error fetching reviews, loading fallbacks:', error.message);
+      if (__DEV__) console.log('Error fetching reviews, loading fallbacks:', error.message);
       return FALLBACK_REVIEWS[stylistSlug ?? ''] ?? [];
     }
     
@@ -130,7 +130,7 @@ export async function getStylistReviews(stylistId: string, stylistSlug?: string)
     
     return data;
   } catch (err) {
-    console.log('Error in getStylistReviews, loading fallbacks:', err);
+    if (__DEV__) console.log('Error in getStylistReviews, loading fallbacks:', err);
     return FALLBACK_REVIEWS[stylistSlug ?? ''] ?? [];
   }
 }

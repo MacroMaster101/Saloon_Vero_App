@@ -347,6 +347,7 @@ export interface Database {
       toggle_review_like: { Args: { p_review_id: string; p_delta: number }; Returns: undefined };
       report_review: { Args: { p_review_id: string }; Returns: undefined };
       mark_conversation_read: { Args: { p_conversation_id: string }; Returns: undefined };
+      claim_bookings: { Args: { p_booking_references: string[] }; Returns: undefined };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
