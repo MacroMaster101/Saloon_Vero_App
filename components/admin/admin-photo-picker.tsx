@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { uploadImage } from '@/lib/api/storage';
+import { ensureCameraPermission, ensurePhotoLibraryPermission } from '@/lib/permissions/photos';
 import { useTheme } from '@/hooks/use-theme';
 import { ThemedTextInput } from '@/components/ui/text-input';
 
@@ -29,7 +30,8 @@ export function AdminPhotoPicker({
   const handlePress = () => {
     const options: AlertButton[] = [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Upload Photo from Device', onPress: pickImage },
+      { text: 'Choose from Library', onPress: () => pickImage('library') },
+      { text: 'Take Photo', onPress: () => pickImage('camera') },
       { text: showUrlInput ? 'Hide Web Link Input' : 'Enter Web Image Link (URL)', onPress: toggleUrlInput },
     ];
 
@@ -51,14 +53,17 @@ export function AdminPhotoPicker({
     setShowUrlInput(!showUrlInput);
   };
 
-  const pickImage = async () => {
+  const pickImage = async (source: 'library' | 'camera') => {
     try {
-      const res = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        quality: 0.7,
-        allowsEditing: true,
-        aspect: [1, 1],
-      });
+      const allowed = source === 'camera'
+        ? await ensureCameraPermission()
+        : await ensurePhotoLibraryPermission();
+      if (!allowed) return;
+
+      const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.7, allowsEditing: true, aspect: [1, 1] };
+      const res = source === 'camera'
+        ? await ImagePicker.launchCameraAsync(opts)
+        : await ImagePicker.launchImageLibraryAsync(opts);
 
       if (res.canceled) return;
       

@@ -51,6 +51,11 @@ const MAPPING = {
   'bubble.left.fill': 'chat',
   'star.fill': 'star',
   'exclamationmark.triangle.fill': 'warning',
+  'arrow.triangle.2.circlepath': 'autorenew',
+  'camera.fill': 'photo-camera',
+  'square.and.arrow.up': 'file-upload',
+  'face.smiling': 'face',
+  'bell.fill': 'notifications',
 } satisfies IconMapping;
 
 /**

@@ -17,6 +17,8 @@ export type GuestBooking = {
   createdAt: string;
 };
 
+const GUEST_STATUSES = ['confirmed', 'completed', 'cancelled'] as const;
+
 function isGuestBooking(value: unknown): value is GuestBooking {
   if (!value || typeof value !== 'object') return false;
   const item = value as Record<string, unknown>;
@@ -26,6 +28,7 @@ function isGuestBooking(value: unknown): value is GuestBooking {
     && typeof item.stylistName === 'string'
     && typeof item.whenLabel === 'string'
     && typeof item.status === 'string'
+    && (GUEST_STATUSES as readonly string[]).includes(item.status)
     && typeof item.createdAt === 'string'
   );
 }

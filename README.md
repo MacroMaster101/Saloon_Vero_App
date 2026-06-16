@@ -69,6 +69,12 @@ A premium **React Native + Expo SDK 54 + TypeScript** mobile application for **S
     *   📅 **Booking cards in chat**: customers can deep-link from a booking to auto-attach its reference card to the thread; staff can attach any of that customer's bookings via a picker sheet.
     *   🔢 Per-side unread tracking and message previews are maintained by database triggers (`on_message_insert`), reset through a `mark_conversation_read` RPC (with a client-side fallback).
     *   🛡️ RLS limits each thread to its two participants; customers can start a conversation freely, while stylists may only open one with a customer who has booked them (enforced by the `is_stylist_user` helper).
+*   **🔔 Push Notifications & Permission Priming:**
+    *   📲 **Expo push notifications** for **booking events** (confirmed / cancelled / rescheduled → the customer) and **new chat messages** (→ the other participant). The device's Expo push token is registered after sign-in and stored in a `push_tokens` table (multi-device).
+    *   ⚙️ Sends are server-side: the booking Edge Functions push directly, and a dedicated **`notify` Edge Function** (participant-verified) handles chat, both POSTing to the **Expo Push API** via a shared `sendExpoPush` helper.
+    *   🪟 **Branded pre-permission priming** — before the OS prompt, a friendly modal (`PermissionPrimer`) explains *why* the app needs **photos**, **camera**, or **notifications**, shown once per permission. If permanently denied, the app offers an **Open Settings** shortcut.
+    *   📷 **Camera capture** ("Take Photo") sits alongside library picking everywhere photos are chosen — avatar, chat, and the admin photo picker — so the camera permission is genuinely used.
+    *   🕶️ Guests are unaffected (no account → no push registration), and notification permission is only requested for signed-in users.
 *   **🛠️ Admin Dashboard:**
     *   📊 **Today** overview with revenue, completion %, capacity and the next booking.
     *   🚶 **Walk-in desk** to create bookings on behalf of customers.
@@ -78,8 +84,10 @@ A premium **React Native + Expo SDK 54 + TypeScript** mobile application for **S
     *   📷 **Custom Photo Uploads**: upload headshots/service images (stored in Supabase Storage with the correct MIME type) or paste custom URLs, updating customer-facing lists in real time.
     *   ➕ **Bottom Floating Action Buttons (FABs)**: quick actions float cleanly above list views, automatically accounting for safe-area layout heights on iOS and Android.
 *   **👤 User Profile Dashboard:**
-    *   🖼️ Profile manager: edit name, phone number, and upload custom avatars directly to Supabase Storage (falls back to email-derived DiceBear avatars if un-configured).
-    *   🌗 **Theme preference** (light / dark / system) persisted across sessions.
+    *   🖼️ **Avatar source switcher** — choose between a generated **DiceBear cartoon** (tap to shuffle a fresh one), your **email/Google account photo** (shown only when available), or a **custom upload** to Supabase Storage. The choice is saved on the user's auth metadata and applied everywhere the avatar appears.
+    *   ✍️ Profile details (name, mobile) save through a dedicated form whose **Save / Cancel buttons appear only when something is edited**, with a confirmation on save; email is shown read-only.
+    *   📊 A compact stats strip surfaces total and upcoming booking counts (upcoming computed by the same future-and-not-cancelled rule as the Schedules tab).
+    *   🌗 **Theme preference** (light / dark / system) persisted across sessions. Guests, who have no account page, get an inline theme toggle on the customer screens instead.
     *   ✨ **New Things tab** highlighting fresh services and salon updates.
 
 ---
@@ -93,7 +101,9 @@ A premium **React Native + Expo SDK 54 + TypeScript** mobile application for **S
     *   `create-booking` — Validates client forms, guards against double-booking race conditions, inserts rows, and issues confirmation references.
     *   `reschedule-booking` — Moves an existing booking to a new date/time with the same conflict guarding.
     *   `cancel-booking` — Cancels a booking, verifying ownership (JWT for users, phone match for guests).
+    *   `notify` — Participant-verified chat push trigger; the client calls it after sending a message and it pushes to the other side via the Expo Push API.
 *   **💬 Realtime Chat Layer:** Conversations and messages live in their own RLS-guarded tables, with `postgres-changes` subscriptions driving live threads and unread badges, database triggers maintaining unread counts and previews, and a private Storage bucket (signed URLs) for photo messages.
+*   **🔔 Notifications & Permissions:** Push tokens are stored per-device in a `push_tokens` table; sends run server-side from the booking functions and the `notify` function (shared `sendExpoPush` helper). On the client, a small `lib/permissions/` layer pairs the OS prompts with a branded priming modal mounted at the app root.
 *   **🧩 Feature-Oriented Organization:** Shared UI, booking logic, API wrappers (per role), auth helpers, review utilities, business constants, validation schemas, and database types are separated into focused folders so the app is easy to extend.
 
 ---
@@ -128,6 +138,7 @@ Saloon_Vero_App/
     auth/                      # 🕶️ Auth-related UI such as the guest-mode header
     booking/                   # 📅 Booking-specific UI such as SlotPicker
     chat/                      # 💬 Chat UI: ChatFab, image bubble/viewer, booking cards
+    permissions/               # 🪟 PermissionPrimer (branded pre-permission modal)
     services/                  # ✂️ Service presentation components
     stylists/                  # 👤 Stylist presentation components
     reviews/                   # ⭐ Shared review UI (e.g. StarRow)
@@ -153,6 +164,8 @@ Saloon_Vero_App/
     auth/                      # 🌐 Google OAuth, routing, signup/error helpers
     booking/                   # 📆 Booking reducer and availability calculations
     chat/                      # 💬 Chat helpers (image paths, message previews)
+    notifications/             # 🔔 Push token registration (register.ts)
+    permissions/               # 🛡️ Photo/camera permission helpers (priming + settings fallback)
     staff/                     # ✂️ Staff bookings grouping/view helpers
     storage/                   # 🕶️ Local guest-booking persistence (AsyncStorage)
     utils/                     # 🕒 Formatters, references, avatar, time & review helpers
@@ -162,8 +175,9 @@ Saloon_Vero_App/
     database.ts                # 🗄️ Supabase database type definitions
 
   supabase/                    # 🗄️ Backend definitions kept alongside the app
-    migrations/                # 🧱 SQL migrations (ratings, reviews, reactions, chat, …)
-    functions/                 # ⚡ Edge Functions: get-availability, create/reschedule/cancel-booking
+    migrations/                # 🧱 SQL migrations (ratings, reviews, reactions, chat, avatar storage, push tokens, …)
+    functions/                 # ⚡ Edge Functions: get-availability, create/reschedule/cancel-booking, notify
+      _shared/                 #     ↳ cors, service client, sendExpoPush push helper
 
   __tests__/                   # 🧪 Jest unit and component test suites (local-only, git-ignored)
 
@@ -221,11 +235,22 @@ The chat feature relies on two extra Supabase configuration steps (also document
 *   **Realtime:** enable replication for the `messages` and `conversations` tables (Dashboard → **Database → Replication**, or `ALTER PUBLICATION supabase_realtime ADD TABLE …`).
 *   **Private `chat` Storage bucket:** create a bucket named `chat` with **Public = OFF**, then apply the participant-only RLS policies on `storage.objects` (provided at the bottom of the migration) so only the two participants can read/write a thread's images.
 
+### 7. 🖼️ Avatar Uploads (Storage policies)
+Profile-photo uploads land in a **public `avatars` bucket** at the path `<user_id>/<timestamp>.jpg`. A *public* bucket only governs reads — **uploads still need RLS `INSERT` policies on `storage.objects`**, or they fail with `new row violates row-level security policy`. Run `supabase/migrations/0010_avatar_storage_policies.sql` (or paste it into the **SQL Editor**) to grant each authenticated user write access to **their own folder only**.
+
+### 8. 🔔 Push Notifications
+Booking and chat pushes need three pieces wired up:
+*   **DB:** run `supabase/migrations/0011_push_tokens.sql` to create the `push_tokens` table (owner-only RLS).
+*   **Edge Functions:** deploy `notify` (plus the existing `create-booking` / `cancel-booking` / `reschedule-booking`, which now send pushes): `supabase functions deploy notify`. They use the standard `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` env vars.
+*   **EAS project ID:** push tokens require an EAS `projectId`. Run `eas init` (or your first `eas build`) — it writes `extra.eas.projectId` into `app.json`. Until then the app skips token registration gracefully (logs a warning, never crashes).
+
+> ⚠️ **Push notifications cannot be tested in Expo Go on Android (SDK 53+)** — use an EAS **development** or **preview** build. The photo/camera **permission priming** works in any dev build. iOS push also requires running on a physical device with a development build.
+
 ---
 
 ## 🧪 Testing
 
-The codebase includes an automated test suite containing **128 tests across 38 suites**, covering state transitions, availability logic, Google OAuth redirect handling, environment validation, onboarding behavior, staff status actions, admin/people role guards, and custom UI components (buttons, cards, loaders, skeletons, empty states, and entrance/press animations).
+The codebase includes an automated test suite containing **140 tests across 40 suites**, covering state transitions, availability logic, Google OAuth redirect handling, environment validation, onboarding behavior, staff status actions, admin/people role guards, and custom UI components (buttons, cards, loaders, skeletons, empty states, and entrance/press animations).
 
 > ℹ️ The `__tests__/` folder is **git-ignored and kept local-only** — it is not uploaded to GitHub. The tests still run on your machine for local verification.
 

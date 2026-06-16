@@ -216,13 +216,18 @@ export async function createStylistReview(
         rating
       );
 
-      await supabase
+      const { error: ratingError } = await supabase
         .from('stylists')
         .update({
           rating: newRating,
           rating_count: newCount
         })
         .eq('id', stylistId);
+      // The review row was created; if only the denormalised rating sync failed,
+      // log it but don't fail the whole call (the review still stands).
+      if (ratingError) {
+        console.warn('Review saved but stylist rating sync failed:', ratingError.message);
+      }
     }
 
     return { ok: true, review: data };

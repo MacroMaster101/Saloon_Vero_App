@@ -320,6 +320,25 @@ export interface Database {
           }
         ];
       };
+      push_tokens: {
+        Row: {
+          user_id: string;
+          token: string;
+          platform: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          token: string;
+          platform?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          platform?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<never, never>;
     Functions: {

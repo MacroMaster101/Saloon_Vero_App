@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, View, Text, RefreshControl, StyleSheet, Modal, ScrollView, Platform, Dimensions, LayoutAnimation } from 'react-native';
+import { Alert, Pressable, View, Text, RefreshControl, StyleSheet, Modal, ScrollView, Platform, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { ScreenContainer } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { PressableScale } from '@/components/ui/pressable-scale';
+import { ThemeToggleButton } from '@/components/ui/theme-toggle-button';
 import { useTheme } from '@/hooks/use-theme';
 import { useSession } from '@/context/session';
 import { LoadingScreen } from '@/components/ui/loading';
@@ -29,7 +30,7 @@ type BookingPreview = { reference: string; starts_at: string; status: string };
 
 export default function Home() {
   const { c, Radius, Type, Spacing, Shadow, scheme } = useTheme();
-  const { user, loading: sessionLoading } = useSession();
+  const { user, isGuest, loading: sessionLoading } = useSession();
 
   // Swipable Stacked Stylist Cards Layout Constants
   const screenWidth = Dimensions.get('window').width;
@@ -38,7 +39,10 @@ export default function Home() {
   const SNAP_INTERVAL = CARD_WIDTH + 2 * CARD_MARGIN; // 170 center-to-center
   const CAROUSEL_PADDING = (screenWidth - CARD_WIDTH) / 2 - CARD_MARGIN; // centers active card on screen
 
-  const VIRTUAL_REPEATS = 50;
+  // Enough copies for a seamless infinite loop without rendering hundreds of
+  // cards at once. The recentre logic resets when within 3 lengths of an end,
+  // so 7 (3 + middle + 3) is ample. (Was 50 → ~85% fewer mounted cards.)
+  const VIRTUAL_REPEATS = 7;
 
   const [services, setServices] = useState<Service[]>([]);
   const [stylists, setStylists] = useState<Stylist[]>([]);
@@ -250,12 +254,6 @@ export default function Home() {
     };
   }, [loading, startAutoScroll]);
 
-  useEffect(() => {
-    if (Platform.OS !== 'web') {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    }
-  }, [activeStylistIndex]);
-
   const handleScrollEnd = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const index = Math.round(offsetX / SNAP_INTERVAL);
@@ -336,7 +334,12 @@ export default function Home() {
   }
 
   const profilePic = avatarSrc(user.user_metadata, user.email ?? user.id);
-  const headerRight = (
+  // Guests have no Account page to change the theme from, so give them the
+  // theme toggle here. Signed-in users get their avatar (which links to Account,
+  // where the theme preference lives).
+  const headerRight = isGuest ? (
+    <ThemeToggleButton />
+  ) : (
     <PressableScale onPress={() => router.push('/(tabs)/account')}>
       <View style={{
         padding: 2,

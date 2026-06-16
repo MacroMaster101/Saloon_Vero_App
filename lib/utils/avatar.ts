@@ -61,12 +61,17 @@ export interface UserMetadata {
   custom_avatar_url?: string | null;
   email_avatar_url?: string | null;
   avatar_choice?: 'custom' | 'dicebear' | 'email' | null;
+  dicebear_seed?: string | null;
   picture?: string | null;
   [key: string]: unknown;
 }
 
 export function getAvatarInfo(userMetadata: UserMetadata | null | undefined, seed: string | null | undefined) {
   const meta = userMetadata || {};
+
+  // A re-rolled cartoon seed (set when the user shuffles) overrides the default
+  // email/name seed, so "shuffle" yields a fresh-looking DiceBear avatar.
+  const dicebearSeed = meta.dicebear_seed || seed;
 
   // Extract custom uploaded avatar URL (if it is from our Supabase storage)
   let customAvatar = meta.custom_avatar_url || null;
@@ -100,7 +105,7 @@ export function getAvatarInfo(userMetadata: UserMetadata | null | undefined, see
   }
 
   // Determine the correct rendering URL
-  let src = dicebearUrl(seed);
+  let src = dicebearUrl(dicebearSeed);
   if (choice === 'custom' && customAvatar) {
     src = customAvatar;
   } else if (choice === 'email' && emailAvatar) {

@@ -77,29 +77,53 @@ export async function getMyConversations(
   if (error || !data) return [];
 
   const viewingAsStylist = !!asStylistId;
-  const items: InboxItem[] = [];
-  for (const c of data) {
-    if (viewingAsStylist) {
-      const name = await customerNameFor(c.customer_id, c.stylist_id);
-      items.push({
-        conversation: c,
-        otherName: name,
-        otherAvatar: dicebearPngUrl(name),
-        unread: c.stylist_unread,
-      });
-    } else {
-      const { data: s } = await supabase
-        .from('stylists').select('name,slug,avatar_url').eq('id', c.stylist_id).maybeSingle();
-      const name = s?.name ?? 'Stylist';
-      items.push({
-        conversation: c,
-        otherName: name,
-        otherAvatar: getStylistAvatar(s?.slug, name, s?.avatar_url),
-        unread: c.customer_unread,
-      });
-    }
+
+  if (viewingAsStylist) {
+    // Resolve customer names in parallel rather than one-await-per-row (N+1).
+    return Promise.all(
+      data.map(async (c) => {
+        const name = await customerNameFor(c.customer_id, c.stylist_id);
+        return {
+          conversation: c,
+          otherName: name,
+          otherAvatar: dicebearPngUrl(name),
+          unread: c.stylist_unread,
+        };
+      }),
+    );
   }
-  return items;
+
+  // Customer side: fetch every stylist in ONE query, then map locally — turns
+  // N round-trips into 1.
+  const stylistIds = [...new Set(data.map((c) => c.stylist_id))];
+  const { data: stylists } = await supabase
+    .from('stylists')
+    .select('id,name,slug,avatar_url')
+    .in('id', stylistIds);
+  const byId = new Map((stylists ?? []).map((s) => [s.id, s]));
+
+  return data.map((c) => {
+    const s = byId.get(c.stylist_id);
+    const name = s?.name ?? 'Stylist';
+    return {
+      conversation: c,
+      otherName: name,
+      otherAvatar: getStylistAvatar(s?.slug, name, s?.avatar_url),
+      unread: c.customer_unread,
+    };
+  });
+}
+
+/**
+ * Total unread count for the badge — reads only the unread columns, skipping the
+ * name/avatar lookups getMyConversations does. Cheap enough to run on the
+ * always-mounted ChatFab on every conversation change.
+ */
+export async function getUnreadCount(asStylistId: string | null): Promise<number> {
+  const col = asStylistId ? 'stylist_unread' : 'customer_unread';
+  const { data } = await supabase.from('conversations').select(col);
+  if (!data) return 0;
+  return (data as Array<Record<string, number>>).reduce((sum, r) => sum + (r[col] ?? 0), 0);
 }
 
 /** The other party's display name + avatar for a single conversation header. */
@@ -336,6 +360,21 @@ export function subscribeToInbox(onChange: () => void): () => void {
   return () => {
     supabase.removeChannel(channel);
   };
+}
+
+/**
+ * Best-effort push to the other conversation participant after a message is
+ * sent. Fires the `notify` edge function (which verifies the caller and targets
+ * the other side). Never throws — a failed push must not affect the send.
+ */
+export async function notifyOtherParticipant(conversationId: string, preview: string): Promise<void> {
+  try {
+    await supabase.functions.invoke('notify', {
+      body: { conversationId, preview },
+    });
+  } catch {
+    // ignore — notifications are non-critical
+  }
 }
 
 // re-export for callers that want the preview locally
