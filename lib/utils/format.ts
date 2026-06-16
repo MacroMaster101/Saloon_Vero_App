@@ -1,5 +1,8 @@
 export function money(n: number): string {
-  return 'LKR ' + n.toLocaleString('en-LK');
+  // Guard against a null/NaN/Infinity price slipping through, which would
+  // otherwise render as "LKR NaN" to the user.
+  const safe = Number.isFinite(n) ? n : 0;
+  return 'LKR ' + safe.toLocaleString('en-LK');
 }
 
 // minutes-from-midnight → "10:00 AM" / "12:00 AM" (1440 = midnight)

@@ -255,6 +255,71 @@ export interface Database {
           }
         ];
       };
+      conversations: {
+        Row: {
+          id: string;
+          customer_id: string;
+          stylist_id: string;
+          created_at: string;
+          last_message_at: string | null;
+          last_message_preview: string | null;
+          customer_unread: number;
+          stylist_unread: number;
+        };
+        Insert: {
+          customer_id: string;
+          stylist_id: string;
+        };
+        Update: {
+          customer_unread?: number;
+          stylist_unread?: number;
+          last_message_at?: string | null;
+          last_message_preview?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'conversations_customer_id_fkey';
+            columns: ['customer_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'conversations_stylist_id_fkey';
+            columns: ['stylist_id'];
+            referencedRelation: 'stylists';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          sender_id: string | null;
+          kind: 'text' | 'image' | 'booking';
+          body: string | null;
+          image_url: string | null;
+          booking_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          conversation_id: string;
+          sender_id: string;
+          kind?: 'text' | 'image' | 'booking';
+          body?: string | null;
+          image_url?: string | null;
+          booking_id?: string | null;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'messages_conversation_id_fkey';
+            columns: ['conversation_id'];
+            referencedRelation: 'conversations';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
     };
     Views: Record<never, never>;
     Functions: {
@@ -262,6 +327,7 @@ export interface Database {
       purge_old_bookings: { Args: { older_than_months?: number }; Returns: number };
       toggle_review_like: { Args: { p_review_id: string; p_delta: number }; Returns: undefined };
       report_review: { Args: { p_review_id: string }; Returns: undefined };
+      mark_conversation_read: { Args: { p_conversation_id: string }; Returns: undefined };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
@@ -278,3 +344,5 @@ export type Booking = Database['public']['Tables']['bookings']['Row'];
 export type GalleryItem = Database['public']['Tables']['gallery']['Row'];
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type StylistReview = Database['public']['Tables']['stylist_reviews']['Row'];
+export type Conversation = Database['public']['Tables']['conversations']['Row'];
+export type Message = Database['public']['Tables']['messages']['Row'];

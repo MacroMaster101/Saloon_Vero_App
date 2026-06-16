@@ -1,30 +1,14 @@
 import { Text, View, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { dicebearUrl } from '@/lib/utils/avatar';
 import { useTheme } from '@/hooks/use-theme';
 import { PressableScale } from '@/components/ui/pressable-scale';
+import { getStylistAvatar } from '@/lib/utils/avatar';
 import type { Stylist } from '@/types/database';
 
-const STYLIST_AVATARS: Record<string, string> = {
-  'ruwan':    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
-  'sanduni':  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80',
-  'tharindu': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
-  'nadeesha': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80',
-};
-
-export function getStylistAvatar(
-  slug: string | null | undefined,
-  name: string,
-  avatarUrl?: string | null,
-): string {
-  const cleanUrl = (avatarUrl ?? '').trim();
-  if (cleanUrl && (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:image'))) {
-    return cleanUrl;
-  }
-  const cleanSlug = (slug ?? '').trim().toLowerCase();
-  return STYLIST_AVATARS[cleanSlug] ?? dicebearUrl(name);
-}
+// Avatar resolution now lives in lib/utils/avatar; re-exported here so existing
+// `from '@/components/stylists/stylist-card'` imports keep working.
+export { getStylistAvatar };
 
 export function StylistCard({
   stylist,

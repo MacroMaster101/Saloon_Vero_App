@@ -1,6 +1,7 @@
 import { StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { Tabs, Redirect } from 'expo-router';
 import { BlurView } from 'expo-blur';
+import { ChatFab } from '@/components/chat/ChatFab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { LoadingScreen } from '@/components/ui/loading';
 import { useSession } from '@/context/session';
@@ -25,6 +26,7 @@ export default function StaffLayout() {
   const isIOS = Platform.OS === 'ios';
 
   return (
+    <>
     <Tabs screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: c.accent,
@@ -81,5 +83,7 @@ export default function StaffLayout() {
         }}
       />
     </Tabs>
+    <ChatFab />
+    </>
   );
 }

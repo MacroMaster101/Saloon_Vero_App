@@ -47,6 +47,7 @@ const MAPPING = {
   'photo.fill': 'photo',
   'lock.fill': 'lock',
   'slider.horizontal.3': 'tune',
+  'crop': 'crop',
   'bubble.left.fill': 'chat',
   'star.fill': 'star',
   'exclamationmark.triangle.fill': 'warning',

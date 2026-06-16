@@ -34,6 +34,7 @@ function RootNavigator() {
         <Stack.Screen name="booking" options={{ headerShown: false }} />
         <Stack.Screen name="(staff)" options={{ headerShown: false }} />
         <Stack.Screen name="(admin)" options={{ headerShown: false }} />
+        <Stack.Screen name="messages" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style={resolvedScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>

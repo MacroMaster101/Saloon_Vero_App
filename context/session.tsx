@@ -72,15 +72,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    Promise.all([supabase.auth.getSession(), AsyncStorage.getItem(GUEST_MODE_KEY)]).then(([{ data }, guest]) => {
-      if (!mounted) return;
-      setSession(data.session);
-      setIsGuest(!data.session && guest === 'true');
-      setLoading(false);
-      if (data.session) {
-        migrateGuestBookings(data.session.user.id);
-      }
-    });
+    Promise.all([supabase.auth.getSession(), AsyncStorage.getItem(GUEST_MODE_KEY)])
+      .then(([{ data }, guest]) => {
+        if (!mounted) return;
+        setSession(data.session);
+        setIsGuest(!data.session && guest === 'true');
+        setLoading(false);
+        if (data.session) {
+          // migrateGuestBookings catches its own errors, but guard the call too so a
+          // rejection can never become an unhandled promise.
+          migrateGuestBookings(data.session.user.id).catch(() => {});
+        }
+      })
+      .catch(() => {
+        // If session/storage read fails, don't hang on the loading screen forever —
+        // fall through as a logged-out user.
+        if (mounted) setLoading(false);
+      });
     const { data: sub } = supabase.auth.onAuthStateChange(async (event, s) => {
       setSession(s);
       // A recovery code/link creates a session, but the user must set a new

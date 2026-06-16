@@ -62,6 +62,13 @@ A premium **React Native + Expo SDK 54 + TypeScript** mobile application for **S
     *   ❤️ **Engagement:** like/heart and report reviews, with per-device state persisted in `AsyncStorage` and optimistic UI that rolls back on failure.
     *   🛡️ **Admin moderation:** a dedicated admin Reviews screen lists all reviews, filters by stylist, surfaces report counts, and supports deletion (which re-derives the affected stylist's rating).
     *   🧰 Graceful fallbacks: when the database is unseeded or unreachable, screens fall back to local datasets so the UI never breaks.
+*   **💬 Real-Time Chat (Customer ↔ Stylist):**
+    *   ⚡ One-to-one threads between a customer and a stylist, with **live message delivery** and **live unread counts** powered by Supabase Realtime (postgres-changes subscriptions on `messages` and `conversations`).
+    *   📨 A floating chat button (`ChatFab`) on the customer home and schedules screens, plus the staff area, opens a unified **inbox** (`app/messages/`) that works for both sides — customers see stylists, stylists see their booked customers.
+    *   📷 **Photo messages**: pick & crop one or more images, sent to a **private Supabase Storage bucket** and served via short-lived 1-hour signed URLs, with a full-screen image viewer.
+    *   📅 **Booking cards in chat**: customers can deep-link from a booking to auto-attach its reference card to the thread; staff can attach any of that customer's bookings via a picker sheet.
+    *   🔢 Per-side unread tracking and message previews are maintained by database triggers (`on_message_insert`), reset through a `mark_conversation_read` RPC (with a client-side fallback).
+    *   🛡️ RLS limits each thread to its two participants; customers can start a conversation freely, while stylists may only open one with a customer who has booked them (enforced by the `is_stylist_user` helper).
 *   **🛠️ Admin Dashboard:**
     *   📊 **Today** overview with revenue, completion %, capacity and the next booking.
     *   🚶 **Walk-in desk** to create bookings on behalf of customers.
@@ -86,6 +93,7 @@ A premium **React Native + Expo SDK 54 + TypeScript** mobile application for **S
     *   `create-booking` — Validates client forms, guards against double-booking race conditions, inserts rows, and issues confirmation references.
     *   `reschedule-booking` — Moves an existing booking to a new date/time with the same conflict guarding.
     *   `cancel-booking` — Cancels a booking, verifying ownership (JWT for users, phone match for guests).
+*   **💬 Realtime Chat Layer:** Conversations and messages live in their own RLS-guarded tables, with `postgres-changes` subscriptions driving live threads and unread badges, database triggers maintaining unread counts and previews, and a private Storage bucket (signed URLs) for photo messages.
 *   **🧩 Feature-Oriented Organization:** Shared UI, booking logic, API wrappers (per role), auth helpers, review utilities, business constants, validation schemas, and database types are separated into focused folders so the app is easy to extend.
 
 ---
@@ -107,6 +115,9 @@ Saloon_Vero_App/
     booking/                   # 📅 Booking flow routes
       [serviceId].tsx          # 🪄 Stepped booking wizard
       success.tsx              # 🎉 Booking confirmation screen
+    messages/                  # 💬 Chat inbox + threads (customer & stylist)
+      index.tsx                #     ↳ inbox list of conversations
+      [conversationId].tsx     #     ↳ live thread (text, photos, booking cards)
 
   assets/images/               # 🖼️ App icons, splash images, logo, onboarding artwork
 
@@ -116,6 +127,7 @@ Saloon_Vero_App/
     staff/                     # ✂️ Staff-specific UI (booking cards, metrics)
     auth/                      # 🕶️ Auth-related UI such as the guest-mode header
     booking/                   # 📅 Booking-specific UI such as SlotPicker
+    chat/                      # 💬 Chat UI: ChatFab, image bubble/viewer, booking cards
     services/                  # ✂️ Service presentation components
     stylists/                  # 👤 Stylist presentation components
     reviews/                   # ⭐ Shared review UI (e.g. StarRow)
@@ -136,10 +148,11 @@ Saloon_Vero_App/
     use-countdown.ts           # ⏱️ Resend-code cooldown timer
 
   lib/                         # 🧰 App logic separated by responsibility
-    api/                       # ⚡ Supabase client, queries, admin/staff APIs, Edge wrappers
+    api/                       # ⚡ Supabase client, queries, admin/staff/chat APIs, Edge wrappers
     admin/                     # 🛠️ Admin helpers (slugify, stats, profile rules)
     auth/                      # 🌐 Google OAuth, routing, signup/error helpers
     booking/                   # 📆 Booking reducer and availability calculations
+    chat/                      # 💬 Chat helpers (image paths, message previews)
     staff/                     # ✂️ Staff bookings grouping/view helpers
     storage/                   # 🕶️ Local guest-booking persistence (AsyncStorage)
     utils/                     # 🕒 Formatters, references, avatar, time & review helpers
@@ -147,6 +160,10 @@ Saloon_Vero_App/
 
   types/                       # 🧾 Shared TypeScript/domain types
     database.ts                # 🗄️ Supabase database type definitions
+
+  supabase/                    # 🗄️ Backend definitions kept alongside the app
+    migrations/                # 🧱 SQL migrations (ratings, reviews, reactions, chat, …)
+    functions/                 # ⚡ Edge Functions: get-availability, create/reschedule/cancel-booking
 
   __tests__/                   # 🧪 Jest unit and component test suites (local-only, git-ignored)
 
@@ -198,6 +215,11 @@ In the Supabase dashboard under **Authentication → URL Configuration**, add th
 *   `https://<your-web-domain>/auth/callback` — web.
 
 > ⚠️ **Note:** Supabase rejects redirect URLs whose host is a LAN IP (e.g. `exp://192.168.x.x:8081/...`) even when allow-listed, and silently falls back to the Site URL. The app works around this in Expo Go by rewriting the redirect host to `localhost` (see `lib/auth/google.ts`), which Supabase always allows.
+
+### 6. 💬 Chat Backend (Realtime + Storage)
+The chat feature relies on two extra Supabase configuration steps (also documented in `supabase/migrations/0009_chat.sql`):
+*   **Realtime:** enable replication for the `messages` and `conversations` tables (Dashboard → **Database → Replication**, or `ALTER PUBLICATION supabase_realtime ADD TABLE …`).
+*   **Private `chat` Storage bucket:** create a bucket named `chat` with **Public = OFF**, then apply the participant-only RLS policies on `storage.objects` (provided at the bottom of the migration) so only the two participants can read/write a thread's images.
 
 ---
 

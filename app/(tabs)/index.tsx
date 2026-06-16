@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { getMyBookings, getServices, getStylists, getStylistReviews, createStylistReview, likeReview, reportReview } from '@/lib/api/queries';
+import { resolveConversationId } from '@/lib/api/chat';
 import { ServiceCard } from '@/components/services/service-card';
 import { Card } from '@/components/ui/card';
 import { ScreenContainer } from '@/components/ui/screen';
@@ -981,6 +982,19 @@ export default function Home() {
                             router.push('/(tabs)/book');
                           }}
                         />
+                        {user && (
+                          <ThemedButton
+                            variant="secondary"
+                            label="Message Stylist"
+                            style={{ marginTop: Spacing.sm }}
+                            onPress={async () => {
+                              const stylistId = infoStylist.id;
+                              setInfoStylist(null);
+                              const id = await resolveConversationId(user.id, stylistId);
+                              if (id) router.push(`/messages/${id}` as never);
+                            }}
+                          />
+                        )}
                       </>
                     ) : (
                       // Reviews Tab

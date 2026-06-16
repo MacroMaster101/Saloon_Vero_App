@@ -35,5 +35,7 @@ export function bookingReducer(s: BookingState, a: Action): BookingState {
       return { ...s, time: a.time, step: 'details' };
     case 'back':
       return { ...s, step: prev(s.step) };
+    default:
+      return s;
   }
 }
