@@ -24,7 +24,12 @@ export function computeUpdatedRating(
 ): { rating: number; rating_count: number } {
   const prevCount = stylist.rating_count ?? 0;
   const prevRating = stylist.rating ?? 0;
+  // Clamp to the valid 1–5 star range so a stray/invalid value (NaN, 0, 10)
+  // can't silently corrupt the running average.
+  const safeNew = Number.isFinite(newReviewRating)
+    ? Math.min(5, Math.max(1, newReviewRating))
+    : prevRating || 1;
   const rating_count = prevCount + 1;
-  const rating = Number((((prevRating * prevCount) + newReviewRating) / rating_count).toFixed(2));
+  const rating = Number((((prevRating * prevCount) + safeNew) / rating_count).toFixed(2));
   return { rating, rating_count };
 }

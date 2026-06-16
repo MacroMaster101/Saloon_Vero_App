@@ -18,6 +18,44 @@ export function dicebearUrl(seed: string | null | undefined): string {
   return `${DICEBEAR_BASE}?${params.toString()}`;
 }
 
+// React Native's <Image> cannot render SVG, so for places that show the avatar
+// in a plain <Image> (e.g. chat), request a PNG from DiceBear's raster endpoint.
+const DICEBEAR_PNG_BASE = `https://api.dicebear.com/9.x/${DICEBEAR_STYLE}/png`;
+
+/** A stable DiceBear PNG URL — safe for React Native's <Image>. */
+export function dicebearPngUrl(seed: string | null | undefined): string {
+  const s = (seed ?? '').trim() || 'guest';
+  const params = new URLSearchParams({
+    seed: s,
+    backgroundType: 'gradientLinear',
+    backgroundColor: 'd99a3d,b8742a',
+  });
+  return `${DICEBEAR_PNG_BASE}?${params.toString()}`;
+}
+
+// Curated real photos for the seeded stylists; everyone else falls back to a
+// DiceBear PNG (renderable in React Native's <Image>, unlike the SVG default).
+const STYLIST_AVATARS: Record<string, string> = {
+  ruwan: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+  sanduni: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80',
+  tharindu: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+  nadeesha: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80',
+};
+
+/** Resolve a stylist's avatar: uploaded photo → curated photo → DiceBear PNG. */
+export function getStylistAvatar(
+  slug: string | null | undefined,
+  name: string,
+  avatarUrl?: string | null,
+): string {
+  const cleanUrl = (avatarUrl ?? '').trim();
+  if (cleanUrl && (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:image'))) {
+    return cleanUrl;
+  }
+  const cleanSlug = (slug ?? '').trim().toLowerCase();
+  return STYLIST_AVATARS[cleanSlug] ?? dicebearPngUrl(name);
+}
+
 export interface UserMetadata {
   avatar_url?: string | null;
   custom_avatar_url?: string | null;

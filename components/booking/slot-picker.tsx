@@ -151,6 +151,28 @@ export function SlotPicker({
 
   return (
     <View style={{ gap: Spacing.lg }}>
+      {/* ── Legend ── */}
+      <View
+        style={{
+          flexDirection: 'row',
+          gap: Spacing.md,
+          flexWrap: 'wrap',
+        }}
+      >
+        {([
+          { icon: 'schedule' as const,    color: c.fgMuted,                              label: 'Available' },
+          { icon: 'event-busy' as const,  color: scheme === 'dark' ? '#F0857E' : '#C0392B', label: 'Booked' },
+          { icon: 'block' as const,       color: c.fgMuted,                              label: 'Blocked' },
+        ]).map((item) => (
+          <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <MaterialIcons name={item.icon} size={12} color={item.color} />
+            <Text style={[Type.caption, { color: c.fgMuted, fontSize: 10, fontFamily: 'Poppins_600SemiBold' }]}>
+              {item.label}
+            </Text>
+          </View>
+        ))}
+      </View>
+
       {groups.map((group) => (
         <View key={group.label} style={{ gap: Spacing.sm }}>
           {/* ── Section header ── */}
@@ -247,31 +269,6 @@ export function SlotPicker({
           </View>
         </View>
       ))}
-
-      {/* ── Legend ── */}
-      <View
-        style={{
-          flexDirection: 'row',
-          gap: Spacing.md,
-          paddingTop: Spacing.sm,
-          borderTopWidth: 1,
-          borderTopColor: c.hairline,
-          flexWrap: 'wrap',
-        }}
-      >
-        {([
-          { icon: 'schedule' as const,    color: c.fgMuted,                              label: 'Available' },
-          { icon: 'event-busy' as const,  color: scheme === 'dark' ? '#F0857E' : '#C0392B', label: 'Booked' },
-          { icon: 'block' as const,       color: c.fgMuted,                              label: 'Blocked' },
-        ]).map((item) => (
-          <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <MaterialIcons name={item.icon} size={12} color={item.color} />
-            <Text style={[Type.caption, { color: c.fgMuted, fontSize: 10, fontFamily: 'Poppins_600SemiBold' }]}>
-              {item.label}
-            </Text>
-          </View>
-        ))}
-      </View>
     </View>
   );
 }

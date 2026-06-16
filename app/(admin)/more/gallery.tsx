@@ -10,7 +10,7 @@ import {
   getGalleryAdmin,
   setGalleryActive,
 } from '@/lib/api/admin';
-import { uploadImage } from '@/lib/api/storage';
+import { uploadImage, deleteImage } from '@/lib/api/storage';
 import { Card } from '@/components/ui/card';
 import { AdminIconAction, AdminSectionLabel } from '@/components/admin/admin-ui';
 import { ScreenContainer } from '@/components/ui/screen';
@@ -77,8 +77,12 @@ export default function Gallery() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await deleteGalleryItem(item.id);
-            load();
+            const res = await deleteGalleryItem(item.id);
+            if ('error' in res) {
+              Alert.alert('Could not delete', res.error);
+              return;
+            }
+            await load();
           },
         },
       ],
@@ -100,7 +104,8 @@ export default function Gallery() {
   const handleAddSave = async () => {
     if (!pendingUri) return;
     setSaving(true);
-    const up = await uploadImage('gallery', `admin/${Date.now()}.jpg`, pendingUri);
+    const path = `admin/${Date.now()}.jpg`;
+    const up = await uploadImage('gallery', path, pendingUri);
     if ('error' in up) {
       setAddError(up.error);
       setSaving(false);
@@ -113,7 +118,12 @@ export default function Gallery() {
       image_url: up.url,
     });
     setSaving(false);
-    if ('error' in res) { setAddError(res.error); return; }
+    if ('error' in res) {
+      // The image uploaded but the row didn't save — remove the orphan.
+      await deleteImage('gallery', path);
+      setAddError(res.error);
+      return;
+    }
     setPendingUri(null);
     setNewTitle('');
     setNewTag('');

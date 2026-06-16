@@ -1,3 +1,4 @@
+import { ChatFab } from '@/components/chat/ChatFab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { LoadingScreen } from '@/components/ui/loading';
 import { Layout } from '@/constants/theme';
@@ -40,6 +41,7 @@ export default function TabLayout() {
   const isIOS = Platform.OS === 'ios';
 
   return (
+    <>
     <Tabs screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: c.accent,
@@ -81,5 +83,7 @@ export default function TabLayout() {
       <Tabs.Screen name="schedules" options={{ title: 'Schedules', href: showLoggedTabs || showGuestTabs ? undefined : null, tabBarIcon: ({ color }) => <IconSymbol name="clock.fill" color={color} /> }} />
       <Tabs.Screen name="account" options={{ title: 'Account', href: showLoggedTabs ? undefined : null, tabBarIcon: ({ color }) => <IconSymbol name="person.fill" color={color} /> }} />
     </Tabs>
+    {showLoggedTabs && <ChatFab />}
+    </>
   );
 }

@@ -115,8 +115,12 @@ export default function BlockedSlots() {
           text: 'Remove',
           style: 'destructive',
           onPress: async () => {
-            await deleteBlockedSlot(slot.id);
-            load();
+            const res = await deleteBlockedSlot(slot.id);
+            if ('error' in res) {
+              Alert.alert('Could not remove', res.error);
+              return;
+            }
+            await load();
           },
         },
       ],

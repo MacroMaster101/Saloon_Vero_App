@@ -190,8 +190,11 @@ export default function AdminToday() {
           refreshing={refreshing}
           onRefresh={async () => {
             setRefreshing(true);
-            await load();
-            setRefreshing(false);
+            try {
+              await load();
+            } finally {
+              setRefreshing(false);
+            }
           }}
           tintColor={c.accent}
         />

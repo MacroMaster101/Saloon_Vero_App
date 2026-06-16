@@ -3,6 +3,8 @@ import { Alert, Linking, Modal, Platform, RefreshControl, ScrollView, Text, View
 import { router, useFocusEffect } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { getBookableServices, getMyBookings, getStylists, submitStylistRating } from '@/lib/api/queries';
+import { resolveConversationId } from '@/lib/api/chat';
+import { localToUtcISO, hhmmToMin } from '@/lib/booking/time';
 import { getGuestBookings, updateGuestBookingStatus, updateGuestBookingTime } from '@/lib/storage/guest-bookings';
 import { getAvailability, rescheduleBooking, cancelBooking } from '@/lib/api/edge';
 import type { SlotEntry } from '@/lib/api/edge';
@@ -290,7 +292,10 @@ export default function Schedules() {
         whenLabel: b.whenLabel,
         status: b.status,
         priceLkr: b.priceLkr,
-        startsAt: b.date && b.time ? `${b.date}T${b.time}:00` : undefined,
+        // Build a proper UTC instant from the stored Colombo wall-clock date+time;
+        // a bare `${date}T${time}` string would be parsed as device-local time and
+        // be off by the Colombo offset (~5.5h), corrupting upcoming/completed sorting.
+        startsAt: b.date && b.time ? localToUtcISO(b.date, hhmmToMin(b.time)) : undefined,
         guestPhone: b.phone,
       })));
     }
@@ -302,6 +307,14 @@ export default function Schedules() {
   useEffect(() => {
     if (!initialLoading) hasAnimated.current = true;
   }, [initialLoading]);
+
+  // ── Message stylist handler ──────────────────────────────────────────────
+  async function handleMessageStylist(booking: ScheduleBooking) {
+    if (!user || !booking.stylistId) return;
+    const id = await resolveConversationId(user.id, booking.stylistId);
+    if (id) router.push(`/messages/${id}?attachBookingId=${booking.id}` as never);
+    else Alert.alert('Could not open chat', 'Please try again in a moment.');
+  }
 
   // ── Cancel handler ─────────────────────────────────────────────────────────
   function handleCancel(booking: ScheduleBooking) {
@@ -524,6 +537,25 @@ export default function Schedules() {
                               )}
                             </View>
 
+                            {!isGuest && booking.stylistId && (
+                              <PressableScale
+                                onPress={() => handleMessageStylist(booking)}
+                                style={{
+                                  borderRadius: Radius.pill,
+                                  borderWidth: 1,
+                                  borderColor: c.line,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  height: 38,
+                                }}
+                              >
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                  <MaterialIcons name="chat" size={12} color={c.accentText} />
+                                  <Text style={{ color: c.accentText, fontSize: 12, fontFamily: 'Poppins_600SemiBold' }}>Message stylist</Text>
+                                </View>
+                              </PressableScale>
+                            )}
+
                             {canAct && (
                               <PressableScale
                                 onPress={() => handleCancel(booking)}
@@ -639,7 +671,11 @@ export default function Schedules() {
           onClose={() => setRescheduleTarget(null)}
           onSuccess={async (whenLabel, date, time) => {
             setBookings((prev) =>
-              prev.map((b) => b.id === rescheduleTarget.id ? { ...b, whenLabel, startsAt: `${date}T${time}:00` } : b),
+              prev.map((b) =>
+                b.id === rescheduleTarget.id
+                  ? { ...b, whenLabel, startsAt: localToUtcISO(date, hhmmToMin(time)) }
+                  : b,
+              ),
             );
             if (isGuest) {
               await updateGuestBookingTime(rescheduleTarget.reference, whenLabel, date, time);

@@ -121,18 +121,23 @@ export async function deleteReview(reviewId: string, stylistId: string): Promise
     .select('rating')
     .eq('stylist_id', stylistId);
 
-  if (remaining && remaining.length > 0) {
-    const avg = remaining.reduce((sum: number, r: any) => sum + r.rating, 0) / remaining.length;
-    await supabase
-      .from('stylists')
-      .update({ rating: Number(avg.toFixed(2)), rating_count: remaining.length })
-      .eq('id', stylistId);
-  } else {
-    await supabase
-      .from('stylists')
-      .update({ rating: null, rating_count: 0 })
-      .eq('id', stylistId);
-  }
+  const ratingPatch =
+    remaining && remaining.length > 0
+      ? {
+          rating: Number(
+            (remaining.reduce((sum: number, r: any) => sum + r.rating, 0) / remaining.length).toFixed(2),
+          ),
+          rating_count: remaining.length,
+        }
+      : { rating: null, rating_count: 0 };
+
+  const { error: ratingError } = await supabase
+    .from('stylists')
+    .update(ratingPatch)
+    .eq('id', stylistId);
+  // The review is already deleted; surface a recalc failure so the caller knows the
+  // stylist's average may be stale rather than silently reporting success.
+  if (ratingError) return { error: ratingError.message };
 
   return { ok: true };
 }
