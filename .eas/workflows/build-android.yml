@@ -1,0 +1,16 @@
+name: Build Android on push
+
+# Runs automatically whenever code is pushed to the Dev branch.
+# Produces an internal-distribution APK (preview profile) you can install
+# directly from the EAS dashboard — no Play Store submission.
+on:
+  push:
+    branches:
+      - Dev
+
+jobs:
+  build_android:
+    type: build
+    params:
+      platform: android
+      profile: preview
