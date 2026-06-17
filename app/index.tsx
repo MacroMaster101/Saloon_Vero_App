@@ -34,12 +34,6 @@ export default function EntryScreen() {
   // Dismissible coach mark pointing at the theme toggle (first-time users only).
   const [themeTipDismissed, setThemeTipDismissed] = useState(false);
 
-  // TEMP DEBUG (remove after diagnosis): surface splash gate state in release logcat.
-  console.log('[SPLASH_DEBUG]', JSON.stringify({
-    IS_TEST, NODE_ENV: process.env.NODE_ENV, SPLASH_DELAY_MS,
-    isFirstTime, sessionLoading, profileReady, delayFinished,
-  }));
-
   // Animations
   const logoScale = useSharedValue(1);
   const logoRotation = useSharedValue(0);
@@ -53,19 +47,26 @@ export default function EntryScreen() {
 
     const startTime = Date.now();
     const duration = SPLASH_DELAY_MS;
-    
+
+    // A guaranteed end-of-splash gate. setTimeout fires even if the progress
+    // interval below is throttled/dropped under animation load in release.
+    const done = setTimeout(() => {
+      setProgress(100);
+      setDelayFinished(true);
+    }, duration);
+
+    // Cosmetic progress bar updates; independent of the gate above.
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
       const pct = Math.min(Math.floor((elapsed / duration) * 100), 100);
       setProgress(pct);
-      
-      if (elapsed >= duration) {
-        clearInterval(interval);
-        setDelayFinished(true);
-      }
-    }, 16);
-    
-    return () => clearInterval(interval);
+      if (elapsed >= duration) clearInterval(interval);
+    }, 50);
+
+    return () => {
+      clearTimeout(done);
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
