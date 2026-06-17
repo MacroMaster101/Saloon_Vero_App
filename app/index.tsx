@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Dimensions, Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -179,12 +179,15 @@ export default function EntryScreen() {
             </Animated.View>
           </View>
           
-          <Animated.Text entering={FadeIn.delay(300)} style={[Type.h1, { color: c.fg, marginTop: Spacing.xl, textAlign: 'center', letterSpacing: 0.5 }]}>
+          {/* Plain Text (no reanimated `entering`): FadeIn entering animations can
+              leave these at opacity 0 in release builds, making the splash look
+              blank. Render the text immediately instead. */}
+          <Text style={[Type.h1, { color: c.fg, marginTop: Spacing.xl, textAlign: 'center', letterSpacing: 0.5 }]}>
             Saloon Vero
-          </Animated.Text>
-          <Animated.Text entering={FadeIn.delay(500)} style={[Type.caption, { color: c.accentText, letterSpacing: 3, textTransform: 'uppercase', textAlign: 'center', marginTop: Spacing.sm, marginBottom: Spacing.xl * 1.5, fontFamily: 'Poppins_600SemiBold' }]}>
+          </Text>
+          <Text style={[Type.caption, { color: c.accentText, letterSpacing: 3, textTransform: 'uppercase', textAlign: 'center', marginTop: Spacing.sm, marginBottom: Spacing.xl * 1.5, fontFamily: 'Poppins_600SemiBold' }]}>
             Redefine Your Look
-          </Animated.Text>
+          </Text>
 
           {/* Progress bar and counter */}
           <View style={styles.progressContainer}>
