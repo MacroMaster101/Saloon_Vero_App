@@ -13,7 +13,12 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SPLASH_DELAY_MS = process.env.NODE_ENV === 'test' ? 0 : 3000;
+// Detected at runtime. In Jest, NODE_ENV is genuinely 'test'. We must NOT use
+// this to seed initial useState/module constants that gate the production splash:
+// Metro's build-time inlining of process.env.NODE_ENV is unreliable in release
+// bundles and was skipping the animated splash entirely in deployed builds.
+const IS_TEST = process.env.NODE_ENV === 'test';
+const SPLASH_DELAY_MS = 3000;
 
 export default function EntryScreen() {
   const { user, loading: sessionLoading, isGuest, profile, profileReady, recovering } = useSession();
@@ -21,22 +26,31 @@ export default function EntryScreen() {
   const insets = useSafeAreaInsets();
 
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
-  const [delayFinished, setDelayFinished] = useState(process.env.NODE_ENV === 'test');
+  // Always starts false in the real app so the timer below controls the splash.
+  // Tests flip it to true immediately via the effect (IS_TEST), avoiding any
+  // dependence on build-time env inlining for the splash to render.
+  const [delayFinished, setDelayFinished] = useState(IS_TEST);
   const [progress, setProgress] = useState(0);
   // Dismissible coach mark pointing at the theme toggle (first-time users only).
   const [themeTipDismissed, setThemeTipDismissed] = useState(false);
+
+  // TEMP DEBUG (remove after diagnosis): surface splash gate state in release logcat.
+  console.log('[SPLASH_DEBUG]', JSON.stringify({
+    IS_TEST, NODE_ENV: process.env.NODE_ENV, SPLASH_DELAY_MS,
+    isFirstTime, sessionLoading, profileReady, delayFinished,
+  }));
 
   // Animations
   const logoScale = useSharedValue(1);
   const logoRotation = useSharedValue(0);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === 'test') {
+    if (IS_TEST) {
       setProgress(100);
       setDelayFinished(true);
       return;
     }
-    
+
     const startTime = Date.now();
     const duration = SPLASH_DELAY_MS;
     
