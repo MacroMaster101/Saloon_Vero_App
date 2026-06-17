@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Dimensions, Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -33,6 +33,10 @@ export default function EntryScreen() {
   const [progress, setProgress] = useState(0);
   // Dismissible coach mark pointing at the theme toggle (first-time users only).
   const [themeTipDismissed, setThemeTipDismissed] = useState(false);
+
+  // Splash animations: pulsing logo + rotating outer ring.
+  const logoScale = useSharedValue(1);
+  const logoRotation = useSharedValue(0);
 
   useEffect(() => {
     if (IS_TEST) {
@@ -72,6 +76,24 @@ export default function EntryScreen() {
     });
   }, []);
 
+  useEffect(() => {
+    // Pulsing logo animation during loading
+    logoScale.value = withRepeat(
+      withSequence(
+        withTiming(1.08, { duration: 900 }),
+        withTiming(1.0, { duration: 900 })
+      ),
+      -1,
+      true
+    );
+
+    // Continuous rotation for the outer ring
+    logoRotation.value = withRepeat(
+      withTiming(360, { duration: 3500, easing: Easing.linear }),
+      -1,
+      false
+    );
+  }, [logoRotation, logoScale]);
 
   useEffect(() => {
     // Once both welcome check, session check, profile check, and minimum timer are loaded
@@ -105,6 +127,14 @@ export default function EntryScreen() {
     router.replace('/access' as never);
   };
 
+  const animatedLogoStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+  }));
+
+  const animatedOuterRingStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${logoRotation.value}deg` }],
+  }));
+
   // Render Splash Loader
   if (isFirstTime === null || sessionLoading || !profileReady || !delayFinished || !isFirstTime) {
     return (
@@ -134,23 +164,19 @@ export default function EntryScreen() {
         />
         
         <View style={[styles.splashContent, { flex: 1, justifyContent: 'center' }]}>
-          {/* Designed premium splash logo mark.
-              NOTE: plain Views (not Animated.View). With React Compiler enabled,
-              reanimated useAnimatedStyle worklets mis-render Image/Text children in
-              release builds (worked in Expo Go, blank in the deployed APK). Static
-              views render reliably. */}
+          {/* Designed premium splash logo mark */}
           <View style={styles.graphicContainer}>
-            {/* Outer ring */}
-            <View style={[styles.outerRing, { borderColor: c.accent, borderStyle: 'dashed' }]} />
+            {/* Rotating outer ring */}
+            <Animated.View style={[styles.outerRing, { borderColor: c.accent, borderStyle: 'dashed' }, animatedOuterRingStyle]} />
 
-            {/* Inner circle containing the official logo */}
-            <View style={[styles.logoCircle, { backgroundColor: c.surfaceRaised, borderColor: c.hairline }]}>
+            {/* Pulsing inner circle containing the official logo */}
+            <Animated.View style={[styles.logoCircle, { backgroundColor: c.surfaceRaised, borderColor: c.hairline }, animatedLogoStyle]}>
               <Image
                 source={require('@/assets/images/logo.jpg')}
                 style={styles.logoImage}
                 resizeMode="contain"
               />
-            </View>
+            </Animated.View>
           </View>
           
           {/* Plain Text (no reanimated `entering`): FadeIn entering animations can
