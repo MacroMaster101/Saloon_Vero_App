@@ -67,7 +67,7 @@ export default function AccessScreen() {
             justifyContent: 'center',
             overflow: 'hidden',
           }, Shadow.md]}>
-          <Image source={require('@/assets/images/logo.jpg')} style={{ width: 84, height: 84, borderRadius: 42 }} resizeMode="contain" />
+          <Image source={require('@/assets/images/logo-mark-vero.png')} style={{ width: 84, height: 84 }} resizeMode="contain" />
         </View>
         <Text style={[Type.eyebrow, { color: c.accentText, letterSpacing: 2, marginTop: Spacing.md, textTransform: 'uppercase', fontFamily: 'Poppins_600SemiBold' }]}>
           Welcome to

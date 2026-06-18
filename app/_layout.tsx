@@ -19,6 +19,10 @@ import { Colors } from '@/constants/theme';
 // onboarding, guest, and auth routing decision. Anchoring `(tabs)` lets the tab
 // guard run before the first-launch check in release/development APKs.
 export const unstable_settings = { anchor: 'index' };
+SplashScreen.setOptions({
+  duration: 250,
+  fade: true,
+});
 SplashScreen.preventAutoHideAsync();
 
 // Push notifications were removed from Expo Go in SDK 53. Only touch the
