@@ -177,7 +177,7 @@ export default function EntryScreen() {
             {/* Pulsing inner circle containing the official logo */}
             <Animated.View style={[styles.logoCircle, { backgroundColor: c.surfaceRaised, borderColor: c.hairline }, animatedLogoStyle]}>
               <Image
-                source={require('@/assets/images/logo.jpg')}
+                source={require('@/assets/images/logo-mark-vero.png')}
                 style={styles.logoImage}
                 resizeMode="contain"
               />

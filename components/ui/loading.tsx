@@ -48,7 +48,7 @@ export function LoadingScreen({ message = 'Loading...', fullScreen = true }: { m
           {/* Pulsing inner monogram container containing the official logo */}
           <Animated.View style={[styles.innerCircle, { backgroundColor: c.surfaceRaised, borderColor: c.line }, animatedInnerStyle]}>
             <Image
-              source={require('@/assets/images/logo.jpg')}
+              source={require('@/assets/images/logo-mark-vero.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
