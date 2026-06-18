@@ -15,7 +15,10 @@ import { ThemePreferenceProvider, useThemePreference } from '@/context/theme';
 import { PermissionPrimerProvider } from '@/components/permissions/PermissionPrimer';
 import { Colors } from '@/constants/theme';
 
-export const unstable_settings = { anchor: '(tabs)' };
+// Native cold starts must enter `app/index.tsx` first; it owns the splash,
+// onboarding, guest, and auth routing decision. Anchoring `(tabs)` lets the tab
+// guard run before the first-launch check in release/development APKs.
+export const unstable_settings = { anchor: 'index' };
 SplashScreen.preventAutoHideAsync();
 
 // Push notifications were removed from Expo Go in SDK 53. Only touch the
