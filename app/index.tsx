@@ -13,11 +13,12 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-// Detected at runtime. In Jest, NODE_ENV is genuinely 'test'. We must NOT use
-// this to seed initial useState/module constants that gate the production splash:
-// Metro's build-time inlining of process.env.NODE_ENV is unreliable in release
-// bundles and was skipping the animated splash entirely in deployed builds.
-const IS_TEST = process.env.NODE_ENV === 'test';
+// Test detection via JEST_WORKER_ID, which Jest sets at runtime and is never
+// present in a release bundle. We deliberately avoid process.env.NODE_ENV:
+// Metro's build-time inlining of NODE_ENV proved unreliable in release builds and
+// was making IS_TEST truthy in the APK, which skipped the splash entirely (it
+// seeded `delayFinished` to true so the 3s timer never gated anything).
+const IS_TEST = !!process.env.JEST_WORKER_ID;
 const SPLASH_DELAY_MS = 3000;
 
 export default function EntryScreen() {
@@ -96,6 +97,8 @@ export default function EntryScreen() {
   }, [logoRotation, logoScale]);
 
   useEffect(() => {
+    // TEMP DEBUG: trace splash/routing gate in release logcat.
+    console.log('[SPLASH_GATE]', JSON.stringify({ isFirstTime, sessionLoading, profileReady, delayFinished, isGuest, hasUser: !!user, recovering }));
     // Once both welcome check, session check, profile check, and minimum timer are loaded
     if (isFirstTime === null || sessionLoading || !profileReady || !delayFinished) return;
 
