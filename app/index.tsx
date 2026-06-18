@@ -16,10 +16,10 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 // Test detection via JEST_WORKER_ID, which Jest sets at runtime and is never
 // present in a release bundle. We deliberately avoid process.env.NODE_ENV:
 // Metro's build-time inlining of NODE_ENV proved unreliable in release builds and
-// was making IS_TEST truthy in the APK, which skipped the splash entirely (it
-// seeded `delayFinished` to true so the 3s timer never gated anything).
+// made IS_TEST truthy in the APK, which skipped the splash entirely.
 const IS_TEST = !!process.env.JEST_WORKER_ID;
-const SPLASH_DELAY_MS = 3000;
+// Minimum splash visible time so it never just flashes. Skipped under Jest.
+const SPLASH_DELAY_MS = 1500;
 
 export default function EntryScreen() {
   const { user, loading: sessionLoading, isGuest, profile, profileReady, recovering } = useSession();
@@ -27,10 +27,7 @@ export default function EntryScreen() {
   const insets = useSafeAreaInsets();
 
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
-  // Always starts false in the real app so the timer below controls the splash.
-  // Tests flip it to true immediately via the effect (IS_TEST), avoiding any
-  // dependence on build-time env inlining for the splash to render.
-  const [delayFinished, setDelayFinished] = useState(IS_TEST);
+  const [minTimeElapsed, setMinTimeElapsed] = useState(IS_TEST);
   const [progress, setProgress] = useState(0);
   // Dismissible coach mark pointing at the theme toggle (first-time users only).
   const [themeTipDismissed, setThemeTipDismissed] = useState(false);
@@ -39,42 +36,30 @@ export default function EntryScreen() {
   const logoScale = useSharedValue(1);
   const logoRotation = useSharedValue(0);
 
+  // Minimum splash time so it never just flashes. The cosmetic progress bar runs
+  // alongside; the setTimeout is the authoritative gate even if the interval is
+  // throttled under animation load in release.
   useEffect(() => {
     if (IS_TEST) {
       setProgress(100);
-      setDelayFinished(true);
+      setMinTimeElapsed(true);
       return;
     }
-
     const startTime = Date.now();
-    const duration = SPLASH_DELAY_MS;
-
-    // A guaranteed end-of-splash gate. setTimeout fires even if the progress
-    // interval below is throttled/dropped under animation load in release.
     const done = setTimeout(() => {
       setProgress(100);
-      setDelayFinished(true);
-    }, duration);
-
-    // Cosmetic progress bar updates; independent of the gate above.
+      setMinTimeElapsed(true);
+    }, SPLASH_DELAY_MS);
     const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const pct = Math.min(Math.floor((elapsed / duration) * 100), 100);
+      const pct = Math.min(Math.floor(((Date.now() - startTime) / SPLASH_DELAY_MS) * 100), 100);
       setProgress(pct);
-      if (elapsed >= duration) clearInterval(interval);
+      if (pct >= 100) clearInterval(interval);
     }, 50);
-
-    return () => {
-      clearTimeout(done);
-      clearInterval(interval);
-    };
+    return () => { clearTimeout(done); clearInterval(interval); };
   }, []);
 
   useEffect(() => {
-    // Check if user has seen onboarding
-    AsyncStorage.getItem('has_seen_welcome').then((val) => {
-      setIsFirstTime(val === null);
-    });
+    AsyncStorage.getItem('has_seen_welcome').then((val) => setIsFirstTime(val === null));
   }, []);
 
   useEffect(() => {
@@ -96,33 +81,28 @@ export default function EntryScreen() {
     );
   }, [logoRotation, logoScale]);
 
-  useEffect(() => {
-    // TEMP DEBUG: trace splash/routing gate in release logcat.
-    console.log('[SPLASH_GATE]', JSON.stringify({ isFirstTime, sessionLoading, profileReady, delayFinished, isGuest, hasUser: !!user, recovering }));
-    // Once both welcome check, session check, profile check, and minimum timer are loaded
-    if (isFirstTime === null || sessionLoading || !profileReady || !delayFinished) return;
+  // Single readiness gate: every input the decision depends on must be resolved.
+  const ready = !sessionLoading && profileReady && isFirstTime !== null && minTimeElapsed;
+  // Whether this user should land in the app rather than onboarding/login.
+  const hasAccess = !!user || isGuest;
 
-    // Mid password-recovery: the user has a session but must set a new password
-    // first. Keep them on the reset screen rather than routing into the app.
+  // One-shot route decision, only once `ready`.
+  useEffect(() => {
+    if (!ready) return;
     if (recovering) {
       router.replace('/auth/reset-password' as never);
       return;
     }
-
-    if (!isFirstTime) {
-      if (isGuest) {
-        // Guests always land on the booking tab
-        router.replace('/(tabs)/book');
-      } else {
-        const dest = routeForSession(user, profile, isGuest);
-        if (dest !== null) {
-          router.replace(dest as never);
-        } else {
-          router.replace('/access' as never);
-        }
-      }
+    if (hasAccess) {
+      router.replace((routeForSession(user, profile, isGuest) ?? '/(tabs)') as never);
+      return;
     }
-  }, [isFirstTime, sessionLoading, profileReady, delayFinished, user, profile, isGuest, recovering]);
+    if (!isFirstTime) {
+      // Returning, logged out: straight to login.
+      router.replace('/access' as never);
+    }
+    // First-time + logged out: fall through and render Get Started in-place.
+  }, [ready, recovering, hasAccess, isFirstTime, user, profile, isGuest]);
 
   // Actions
   const handleGetStarted = async () => {
@@ -138,8 +118,10 @@ export default function EntryScreen() {
     transform: [{ rotate: `${logoRotation.value}deg` }],
   }));
 
-  // Render Splash Loader
-  if (isFirstTime === null || sessionLoading || !profileReady || !delayFinished || !isFirstTime) {
+  // Show splash until ready; once ready, only first-time logged-out users fall
+  // through to Get Started — everyone else is mid-redirect, so keep the splash.
+  const showGetStarted = ready && !recovering && !hasAccess && isFirstTime === true;
+  if (!showGetStarted) {
     return (
       <View style={styles.container}>
         {/* Full-bleed background graphic */}
