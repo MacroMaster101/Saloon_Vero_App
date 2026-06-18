@@ -3,10 +3,11 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { LoadingScreen } from '@/components/ui/loading';
 import { Layout } from '@/constants/theme';
 import { useSession } from '@/context/session';
+import { hasSeenWelcome } from '@/lib/auth/onboarding';
 import { useTheme } from '@/hooks/use-theme';
 import { BlurView } from 'expo-blur';
 import { Redirect, Tabs, router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,16 +21,44 @@ export default function TabLayout() {
   const { user, isGuest, loading, profile, profileReady, recovering } = useSession();
   const showLoggedTabs = !!user;
   const showGuestTabs = !user && isGuest;
+  const [welcomeSeen, setWelcomeSeen] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!loading && !user && !isGuest) router.replace('/access' as never);
+    let cancelled = false;
+    if (loading || user || isGuest) {
+      setWelcomeSeen(null);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    hasSeenWelcome()
+      .then((seen) => {
+        if (!cancelled) setWelcomeSeen(seen);
+      })
+      .catch(() => {
+        if (!cancelled) setWelcomeSeen(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, user, isGuest]);
+
+  const unauthenticatedWelcomePending = !loading && !user && !isGuest && welcomeSeen === null;
+
+  useEffect(() => {
+    if (loading || unauthenticatedWelcomePending) return;
+    if (!user && !isGuest) router.replace((welcomeSeen ? '/access' : '/') as never);
     // A recovery session must finish setting a new password before using the app.
     else if (recovering) router.replace('/auth/reset-password' as never);
-  }, [loading, user, isGuest, recovering]);
+  }, [loading, user, isGuest, recovering, welcomeSeen, unauthenticatedWelcomePending]);
 
   // Wait for the profile before rendering: without this, staff/admin logging in
   // see the customer tab bar flash before their workspace redirect fires.
-  if (loading || (!!user && !profileReady)) return <LoadingScreen message="Loading..." />;
+  if (loading || unauthenticatedWelcomePending || (!!user && !profileReady)) {
+    return <LoadingScreen message="Loading..." />;
+  }
 
   // Staff guard: redirect linked staff away from customer tabs
   // Placed after all hooks to respect rules-of-hooks

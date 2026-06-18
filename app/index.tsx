@@ -2,11 +2,11 @@ import { ThemedButton } from '@/components/ui/button';
 import { ThemeToggleButton } from '@/components/ui/theme-toggle-button';
 import { CoachTooltip, PulseRing } from '@/components/ui/coach-tooltip';
 import { useSession } from '@/context/session';
+import { hasSeenWelcome, markWelcomeSeen } from '@/lib/auth/onboarding';
 import { routeForSession } from '@/lib/auth/routing';
 import { useTheme } from '@/hooks/use-theme';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Dimensions, Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, Easing } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
@@ -31,6 +31,7 @@ export default function EntryScreen() {
   const [progress, setProgress] = useState(0);
   // Dismissible coach mark pointing at the theme toggle (first-time users only).
   const [themeTipDismissed, setThemeTipDismissed] = useState(false);
+  const didRoute = useRef(false);
 
   // Splash animations: pulsing logo + rotating outer ring.
   const logoScale = useSharedValue(1);
@@ -59,7 +60,19 @@ export default function EntryScreen() {
   }, []);
 
   useEffect(() => {
-    AsyncStorage.getItem('has_seen_welcome').then((val) => setIsFirstTime(val === null));
+    let cancelled = false;
+    hasSeenWelcome()
+      .then((seen) => {
+        if (!cancelled) setIsFirstTime(!seen);
+      })
+      .catch(() => {
+        // Storage should not strand users on the splash. If the read fails, use
+        // the most forgiving path and let them see the welcome screen.
+        if (!cancelled) setIsFirstTime(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -88,17 +101,21 @@ export default function EntryScreen() {
 
   // One-shot route decision, only once `ready`.
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || didRoute.current) return;
     if (recovering) {
+      didRoute.current = true;
       router.replace('/auth/reset-password' as never);
       return;
     }
     if (hasAccess) {
+      if (isFirstTime) markWelcomeSeen().catch(() => {});
+      didRoute.current = true;
       router.replace((routeForSession(user, profile, isGuest) ?? '/(tabs)') as never);
       return;
     }
     if (!isFirstTime) {
       // Returning, logged out: straight to login.
+      didRoute.current = true;
       router.replace('/access' as never);
     }
     // First-time + logged out: fall through and render Get Started in-place.
@@ -106,8 +123,11 @@ export default function EntryScreen() {
 
   // Actions
   const handleGetStarted = async () => {
-    await AsyncStorage.setItem('has_seen_welcome', 'true');
-    router.replace('/access' as never);
+    try {
+      await markWelcomeSeen();
+    } finally {
+      router.replace('/access' as never);
+    }
   };
 
   const animatedLogoStyle = useAnimatedStyle(() => ({

@@ -75,6 +75,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     Promise.all([supabase.auth.getSession(), AsyncStorage.getItem(GUEST_MODE_KEY)])
       .then(([{ data }, guest]) => {
         if (!mounted) return;
+        if (data.session) setProfileChecked(false);
         setSession(data.session);
         setIsGuest(!data.session && guest === 'true');
         setLoading(false);
@@ -90,6 +91,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (mounted) setLoading(false);
       });
     const { data: sub } = supabase.auth.onAuthStateChange(async (event, s) => {
+      if (s) setProfileChecked(false);
       setSession(s);
       // A recovery code/link creates a session, but the user must set a new
       // password before entering the app. The OTP path fires SIGNED_IN (not
